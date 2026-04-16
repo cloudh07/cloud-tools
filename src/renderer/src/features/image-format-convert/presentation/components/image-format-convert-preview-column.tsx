@@ -32,7 +32,7 @@ export function ImageFormatConvertPreviewColumn({
   const { desktop } = useRouteContext({ from: '/tools' })
   const job = useImageFormatConvertJobStore()
   const [inputPreviewUrl, setInputPreviewUrl] = useState<string | null>(null)
-  const [previewLoadFailed, setPreviewLoadFailed] = useState(false)
+  const [previewLoadFailed, setPreviewLoadFailed] = useState<boolean>(false)
 
   useEffect(() => {
     const p = selectedInputPath?.trim() ?? ''

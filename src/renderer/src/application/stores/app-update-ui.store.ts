@@ -1,25 +1,30 @@
 import type { AppUpdateEvent } from '@shared/domain/app-update'
 import { create } from 'zustand'
 
+export type UpdatePhase =
+  | 'idle'
+  | 'checking'
+  | 'update-available'
+  | 'downloading'
+  | 'downloaded'
+  | 'installing'
+  | 'failed'
+
 type State = {
-  incomingVersion: string | null
-  readyInstallVersion: string | null
-  downloadPercent: number | null
-  lastHint: string | null
-  lastError: string | null
+  phase: UpdatePhase
+  version: string | null
+  downloadPercent: number
+  errorMessage: string | null
   applyEvent: (ev: AppUpdateEvent) => void
+  markInstalling: () => void
   reset: () => void
 }
 
-const initial = (): Pick<
-  State,
-  'incomingVersion' | 'readyInstallVersion' | 'downloadPercent' | 'lastHint' | 'lastError'
-> => ({
-  incomingVersion: null,
-  readyInstallVersion: null,
-  downloadPercent: null,
-  lastHint: null,
-  lastError: null
+const initial = (): Pick<State, 'phase' | 'version' | 'downloadPercent' | 'errorMessage'> => ({
+  phase: 'idle',
+  version: null,
+  downloadPercent: 0,
+  errorMessage: null
 })
 
 export const useAppUpdateUiStore = create<State>((set) => ({
@@ -27,51 +32,43 @@ export const useAppUpdateUiStore = create<State>((set) => ({
   applyEvent: (ev) => {
     switch (ev.type) {
       case 'checking':
-        set({ lastHint: 'Đang kiểm tra máy chủ cập nhật…', lastError: null })
+        set({ phase: 'checking', errorMessage: null })
         return
       case 'update-available':
         set({
-          incomingVersion: ev.version,
-          readyInstallVersion: null,
+          phase: 'update-available',
+          version: ev.version,
           downloadPercent: 0,
-          lastHint: `Phiên bản ${ev.version} - đang tải…`,
-          lastError: null
+          errorMessage: null
         })
         return
       case 'update-not-available':
-        set({
-          ...initial(),
-          lastHint: `Ứng dụng đã ở bản mới nhất (${ev.version}).`
-        })
+        set(initial())
         return
       case 'download-progress':
-        set({
-          downloadPercent: ev.percent,
-          lastError: null
-        })
+        set({ phase: 'downloading', downloadPercent: Math.round(ev.percent) })
         return
       case 'update-downloaded':
-        set({
-          incomingVersion: null,
-          readyInstallVersion: ev.version,
-          downloadPercent: null,
-          lastHint: 'Đã tải xong. Khởi động lại để áp dụng.',
-          lastError: null
-        })
+        set({ phase: 'downloaded', version: ev.version, downloadPercent: 100, errorMessage: null })
         return
       case 'error':
-        set({ lastError: ev.message })
+        set({ phase: 'failed', errorMessage: ev.message })
         return
       default:
         return
     }
   },
+  markInstalling: () => set({ phase: 'installing' }),
   reset: () => set(initial())
 }))
 
-export function selectAppUpdateSidebarIconVisible(s: State): boolean {
-  if (s.readyInstallVersion != null) return true
-  if (s.incomingVersion != null) return true
-  if (s.downloadPercent != null && s.downloadPercent < 100) return true
-  return false
+export function selectShowUpdateIcon(s: State): boolean {
+  return (
+    s.phase === 'update-available' ||
+    s.phase === 'downloading' ||
+    s.phase === 'downloaded' ||
+    s.phase === 'failed'
+  )
 }
+
+export const selectAppUpdateSidebarIconVisible = selectShowUpdateIcon

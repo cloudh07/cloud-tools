@@ -47,7 +47,7 @@ export function VideoFormatConvertPreviewColumn(): ReactElement {
   const flowStatus = ui.flowStatus
 
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [videoLoadFailed, setVideoLoadFailed] = useState(false)
+  const [videoLoadFailed, setVideoLoadFailed] = useState<boolean>(false)
 
   useEffect(() => {
     const p = inputPath?.trim() ?? ''

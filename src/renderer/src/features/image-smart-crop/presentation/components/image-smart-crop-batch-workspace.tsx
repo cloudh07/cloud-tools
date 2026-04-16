@@ -77,7 +77,7 @@ export function ImageSmartCropBatchWorkspace(): ReactElement {
 
   const [selectedPreviewUrl, setSelectedPreviewUrl] = useState<string | null>(null)
   const [previewAnalysis, setPreviewAnalysis] = useState<SmartCropAnalysisResult | null>(null)
-  const [busyPreviewAnalyze, setBusyPreviewAnalyze] = useState(false)
+  const [busyPreviewAnalyze, setBusyPreviewAnalyze] = useState<boolean>(false)
   const lastPreviewPathForDebounceRef = useRef<string | null>(null)
 
   const selected = useMemo(
