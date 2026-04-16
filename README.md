@@ -85,4 +85,3 @@ Optional **WebP** export runs as a second ffmpeg pass from the intermediate file
 - Hardware encoding (NVENC / QSV) presets
 - Presets persisted per tool and project files
 - Automated tests around ffmpeg graph building and progress parsing
-=======
