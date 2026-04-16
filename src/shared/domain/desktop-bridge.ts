@@ -24,6 +24,12 @@ import type {
   StartImageSmartCropBatchRequest
 } from './image-smart-crop-batch'
 import type { StartVideoJobRequest, VideoJobEvent, VideoProbeResult } from './video-job'
+import type {
+  StartVideoFormatConvertJobRequest,
+  VideoFormatConvertJobEvent,
+  VideoFormatConvertProbeResult,
+  VideoFormatTarget
+} from './video-format-convert'
 import type { GetPathForLocalFileResult } from './local-file-drop-path'
 
 export type DesktopBridge = {
@@ -75,4 +81,12 @@ export type DesktopBridge = {
   startImageFormatConvertBatch: (req: StartImageFormatConvertBatchRequest) => Promise<{ ok: true }>
   cancelImageFormatConvertBatch: (batchId: string) => Promise<{ ok: true }>
   onImageFormatConvertBatchEvent: (cb: (event: ImageFormatConvertBatchEvent) => void) => () => void
+  probeVideoFormatConvert: (inputPath: string) => Promise<VideoFormatConvertProbeResult>
+  startVideoFormatConvertJob: (req: StartVideoFormatConvertJobRequest) => Promise<{ ok: true }>
+  cancelVideoFormatConvertJob: (jobId: string) => Promise<{ ok: true }>
+  onVideoFormatConvertJobEvent: (cb: (event: VideoFormatConvertJobEvent) => void) => () => void
+  pickVideoFormatSavePath: (payload: {
+    defaultPath: string
+    format: VideoFormatTarget
+  }) => Promise<string | null>
 }

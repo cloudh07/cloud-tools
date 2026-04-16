@@ -777,10 +777,10 @@ export function VideoChromaPage(): ReactElement {
                           }
                         }}
                       >
-                        {ui.isProbing ? (
-                          <Spinner className="size-4" />
+                        {busy || ui.isProbing ? (
+                          <Spinner className="size-4" aria-hidden />
                         ) : (
-                          <Wand2 className="size-4" />
+                          <Wand2 className="size-4" aria-hidden />
                         )}
                         Bắt đầu
                       </Button>

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const imageFormatConvertSearchSchema = z.object({
+  media: z.enum(['image', 'video']).optional(),
   mode: z.enum(['single', 'batch']).optional()
 })
 

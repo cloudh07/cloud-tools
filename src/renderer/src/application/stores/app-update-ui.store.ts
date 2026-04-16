@@ -34,7 +34,7 @@ export const useAppUpdateUiStore = create<State>((set) => ({
           incomingVersion: ev.version,
           readyInstallVersion: null,
           downloadPercent: 0,
-          lastHint: `Phiên bản ${ev.version} — đang tải…`,
+          lastHint: `Phiên bản ${ev.version} - đang tải…`,
           lastError: null
         })
         return

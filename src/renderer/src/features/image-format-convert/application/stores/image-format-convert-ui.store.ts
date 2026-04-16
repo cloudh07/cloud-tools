@@ -8,7 +8,7 @@ export type ImageFormatConvertQueueItem = {
   outputPath: string
 }
 
-type State = {
+type ImageFormatConvertUiSlice = {
   outputFolder: string | null
   batchZipSourceFolder: string | null
   outputFormat: ImageFormatTarget
@@ -24,6 +24,9 @@ type State = {
   queue: ImageFormatConvertQueueItem[]
   selectedLocalId: string | null
   isScanningFolder: boolean
+}
+
+type ImageFormatConvertUiState = ImageFormatConvertUiSlice & {
   resetSession: () => void
   setOutputFolder: (p: string | null) => void
   setOutputFormat: (f: ImageFormatTarget) => void
@@ -44,47 +47,29 @@ type State = {
   rebuildOutputPaths: () => void
 }
 
-const defaultState = (): Omit<
-  State,
-  | 'resetSession'
-  | 'setOutputFolder'
-  | 'setOutputFormat'
-  | 'setKeepMetadata'
-  | 'setAutoRename'
-  | 'setOverwrite'
-  | 'setConvertWholeQueue'
-  | 'setZipOutput'
-  | 'setJpegQuality'
-  | 'setWebpQuality'
-  | 'setAvifQuality'
-  | 'setPngCompressionLevel'
-  | 'setSelected'
-  | 'setIsScanningFolder'
-  | 'addPaths'
-  | 'clearQueue'
-  | 'removeItem'
-  | 'rebuildOutputPaths'
-> => ({
-  outputFolder: null,
-  batchZipSourceFolder: null,
-  outputFormat: 'webp',
-  keepMetadata: true,
-  autoRename: true,
-  overwrite: false,
-  convertWholeQueue: true,
-  zipOutput: false,
-  jpegQuality: 92,
-  webpQuality: 85,
-  avifQuality: 50,
-  pngCompressionLevel: 6,
-  queue: [],
-  selectedLocalId: null,
-  isScanningFolder: false
-})
+function initialUiSlice(): ImageFormatConvertUiSlice {
+  return {
+    outputFolder: null,
+    batchZipSourceFolder: null,
+    outputFormat: 'webp',
+    keepMetadata: true,
+    autoRename: true,
+    overwrite: false,
+    convertWholeQueue: true,
+    zipOutput: false,
+    jpegQuality: 92,
+    webpQuality: 85,
+    avifQuality: 50,
+    pngCompressionLevel: 6,
+    queue: [],
+    selectedLocalId: null,
+    isScanningFolder: false
+  }
+}
 
-export const useImageFormatConvertUiStore = create<State>((set, get) => ({
-  ...defaultState(),
-  resetSession: () => set(defaultState()),
+export const useImageFormatConvertUiStore = create<ImageFormatConvertUiState>((set, get) => ({
+  ...initialUiSlice(),
+  resetSession: () => set(initialUiSlice()),
   setOutputFolder: (outputFolder) => {
     set({ outputFolder })
     get().rebuildOutputPaths()

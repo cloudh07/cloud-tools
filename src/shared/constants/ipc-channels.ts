@@ -37,6 +37,11 @@ export const IpcChannels = {
   IMAGE_FORMAT_CONVERT_START: 'image-format-convert:start',
   IMAGE_FORMAT_CONVERT_CANCEL: 'image-format-convert:cancel',
   IMAGE_FORMAT_CONVERT_EVENT: 'image-format-convert:event',
+  VIDEO_FORMAT_CONVERT_PROBE: 'video-format-convert:probe',
+  VIDEO_FORMAT_CONVERT_START: 'video-format-convert:start',
+  VIDEO_FORMAT_CONVERT_CANCEL: 'video-format-convert:cancel',
+  VIDEO_FORMAT_CONVERT_EVENT: 'video-format-convert:event',
+  DIALOG_SELECT_VIDEO_FORMAT_SAVE: 'app:dialog:select-video-format-save',
   APP_UPDATE_CHECK: 'app:update:check',
   APP_UPDATE_INSTALL: 'app:update:install',
   APP_UPDATE_EVENT: 'app:update:event'

@@ -42,7 +42,7 @@ import type {
 } from '@shared/domain/image-smart-crop'
 import type { StartImageSmartCropBatchRequest } from '@shared/domain/image-smart-crop-batch'
 import { useRouteContext } from '@tanstack/react-router'
-import { FolderOpen, Images, Play, Square, Trash2, Zap } from 'lucide-react'
+import { FolderOpen, Images, Square, Trash2, Wand2, Zap } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { toast } from 'sonner'
 
@@ -192,6 +192,13 @@ export function ImageSmartCropBatchWorkspace(): ReactElement {
 
   const busy =
     job.status === 'processing' || job.status === 'queued' || job.zip.status === 'running'
+
+  const canStart = useMemo(() => {
+    if (busy) return false
+    if (!ui.outputFolder?.trim()) return false
+    if (ui.queue.length === 0) return false
+    return ui.queue.every((q) => q.outputPath.trim().length > 0)
+  }, [busy, ui.outputFolder, ui.queue])
 
   const inputDrop = useInputVideoDrop({
     disabled: busy,
@@ -369,11 +376,11 @@ export function ImageSmartCropBatchWorkspace(): ReactElement {
                     <FolderOpen className="mr-2 size-4" aria-hidden />
                     Thư mục đầu ra
                   </Button>
-                  <Button type="button" disabled={busy} onClick={() => void startBatch()}>
+                  <Button type="button" disabled={!canStart} onClick={() => void startBatch()}>
                     {busy ? (
-                      <Spinner className="size-4" />
+                      <Spinner className="size-4" aria-hidden />
                     ) : (
-                      <Play className="mr-2 size-4" aria-hidden />
+                      <Wand2 className="size-4" aria-hidden />
                     )}
                     Bắt đầu batch
                   </Button>

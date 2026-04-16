@@ -57,7 +57,7 @@ import {
 } from '@shared/infrastructure/ffmpeg/compress-estimates'
 import { resolveCompressEncodingPlan } from '@shared/infrastructure/ffmpeg/video-compress-plan'
 import { useRouteContext } from '@tanstack/react-router'
-import { FolderOpen, Gauge, Play, Square, Trash2 } from 'lucide-react'
+import { FolderOpen, Gauge, Square, Trash2, Wand2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { toast } from 'sonner'
 
@@ -114,6 +114,12 @@ export function VideoCompressPage(): ReactElement {
   }, [videoCompress.title])
 
   const busy = job.status === 'running' || job.status === 'queued' || job.status === 'cancelling'
+
+  const canStart = useMemo(() => {
+    if (busy) return false
+    if (!ui.outputFolder?.trim()) return false
+    return rows.some((r) => Boolean(r.probe && r.outputPath.trim()))
+  }, [busy, rows, ui.outputFolder])
 
   const firstProbe = rows.find((r) => r.probe)?.probe ?? null
 
@@ -418,8 +424,12 @@ export function VideoCompressPage(): ReactElement {
                       <FolderOpen className="mr-2 size-4" aria-hidden />
                       Đầu ra
                     </Button>
-                    <Button type="button" disabled={busy} onClick={() => void startBatch()}>
-                      {busy ? <Spinner className="size-4" /> : <Play className="mr-2 size-4" />}
+                    <Button type="button" disabled={!canStart} onClick={() => void startBatch()}>
+                      {busy ? (
+                        <Spinner className="size-4" aria-hidden />
+                      ) : (
+                        <Wand2 className="size-4" aria-hidden />
+                      )}
                       Bắt đầu
                     </Button>
                     <Button type="button" variant="ghost" disabled={!busy} onClick={cancelRun}>

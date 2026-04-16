@@ -41,7 +41,7 @@ import type {
 } from '@shared/domain/audio-extract-job'
 import { buildAudioExtractFfmpegArgs } from '@shared/infrastructure/ffmpeg/build-audio-extract-args'
 import { useRouteContext } from '@tanstack/react-router'
-import { FolderOpen, Headphones, Play, Square } from 'lucide-react'
+import { FolderOpen, Headphones, Square, Wand2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react'
 import { toast } from 'sonner'
 
@@ -133,6 +133,27 @@ export function AudioExtractorPage(): ReactElement {
 
   const busy = job.status === 'running' || job.status === 'queued' || job.status === 'cancelling'
   const showProgressPercent = job.status === 'running' || job.status === 'cancelling'
+
+  const canStart = useMemo(() => {
+    if (busy) return false
+    if (probeSlice.status === 'loading') return false
+    if (!ui.inputPath?.trim()) return false
+    if (!ui.outputFolder?.trim()) return false
+    if (probeSlice.status !== 'ready' || !probe?.tracks.length) return false
+    if (!ui.extractAll) {
+      const t = probe.tracks.find((x) => x.audioOrdinal === ui.selectedAudioOrdinal)
+      if (!t) return false
+    }
+    return true
+  }, [
+    busy,
+    probe,
+    probeSlice.status,
+    ui.extractAll,
+    ui.inputPath,
+    ui.outputFolder,
+    ui.selectedAudioOrdinal
+  ])
 
   const applyDroppedInputPaths = useCallback((paths: string[]) => {
     const first = paths[0]
@@ -413,12 +434,12 @@ export function AudioExtractorPage(): ReactElement {
                   />
                   <Separator className="opacity-60" />
                   <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      disabled={busy || probeSlice.status === 'loading'}
-                      onClick={() => void startExtract()}
-                    >
-                      {busy ? <Spinner className="size-4" /> : <Play className="mr-2 size-4" />}
+                    <Button type="button" disabled={!canStart} onClick={() => void startExtract()}>
+                      {busy ? (
+                        <Spinner className="size-4" aria-hidden />
+                      ) : (
+                        <Wand2 className="size-4" aria-hidden />
+                      )}
                       Bắt đầu
                     </Button>
                     <Button type="button" variant="outline" disabled={!busy} onClick={cancelRun}>

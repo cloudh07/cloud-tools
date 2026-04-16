@@ -17,7 +17,7 @@ export type FormatConvertItemRuntime = {
   errorMessage: string | null
 }
 
-type State = {
+type ImageFormatConvertJobSlice = {
   status: 'idle' | 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled'
   batchId: string | null
   total: number
@@ -30,6 +30,9 @@ type State = {
     result: ImageFormatConvertBatchZipResult | null
     error: string | null
   }
+}
+
+type ImageFormatConvertJobState = ImageFormatConvertJobSlice & {
   reset: () => void
   bootstrapQueue: (rows: Array<{ localId: string; inputPath: string; outputPath: string }>) => {
     batchId: string
@@ -38,23 +41,22 @@ type State = {
   applyEvent: (ev: ImageFormatConvertBatchEvent) => void
 }
 
-const initial = (): Pick<
-  State,
-  'status' | 'batchId' | 'total' | 'currentIndex' | 'items' | 'logs' | 'summary' | 'zip'
-> => ({
-  status: 'idle',
-  batchId: null,
-  total: 0,
-  currentIndex: -1,
-  items: {},
-  logs: [],
-  summary: null,
-  zip: { status: 'idle', result: null, error: null }
-})
+function initialJobSlice(): ImageFormatConvertJobSlice {
+  return {
+    status: 'idle',
+    batchId: null,
+    total: 0,
+    currentIndex: -1,
+    items: {},
+    logs: [],
+    summary: null,
+    zip: { status: 'idle', result: null, error: null }
+  }
+}
 
-export const useImageFormatConvertJobStore = create<State>((set, get) => ({
-  ...initial(),
-  reset: () => set(initial()),
+export const useImageFormatConvertJobStore = create<ImageFormatConvertJobState>((set, get) => ({
+  ...initialJobSlice(),
+  reset: () => set(initialJobSlice()),
   bootstrapQueue: (rows) => {
     const batchId = crypto.randomUUID()
     const items: Record<string, FormatConvertItemRuntime> = {}
@@ -73,7 +75,7 @@ export const useImageFormatConvertJobStore = create<State>((set, get) => ({
       }
     }
     set({
-      ...initial(),
+      ...initialJobSlice(),
       status: 'queued',
       batchId,
       total: rows.length,

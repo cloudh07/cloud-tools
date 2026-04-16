@@ -38,7 +38,7 @@ export const SHELL_NAV_TREE: readonly ShellNavEntry[] = [
       { id: 'video-compress', label: 'Tối ưu video', link: videoCompressLink },
       { id: 'audio-extract', label: 'Tách âm thanh', link: audioExtractLink },
       { id: 'image-smart-crop', label: 'Auto-Crop ảnh', link: imageSmartCropLink },
-      { id: 'image-format-convert', label: 'Đổi định dạng ảnh', link: imageFormatConvertLink }
+      { id: 'image-format-convert', label: 'Đổi định dạng', link: imageFormatConvertLink }
     ]
   },
   { kind: 'leaf', id: 'settings', label: 'Cài đặt', link: settingsLink }

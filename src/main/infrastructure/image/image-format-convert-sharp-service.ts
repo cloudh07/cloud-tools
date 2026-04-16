@@ -55,7 +55,7 @@ export async function probeImageForFormatConvert(
     const pages = meta.pages != null && meta.pages > 1 ? meta.pages : null
     if (pages != null) {
       hint =
-        'Nguồn có nhiều khung/trang; Sharp sẽ xử lý khung đầu khi chuyển định dạng (trừ khi pipeline hỗ trợ khác ở bản sau).'
+        'Nguồn có nhiều khung hoặc trang. Sharp sẽ xử lý khung đầu tiên khi chuyển định dạng, trừ khi pipeline hỗ trợ khác trong các phiên bản sau.'
     }
 
     return {

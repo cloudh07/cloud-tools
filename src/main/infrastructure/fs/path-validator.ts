@@ -2,6 +2,7 @@ import { existsSync, statSync } from 'fs'
 import { basename, dirname, extname, isAbsolute, normalize } from 'path'
 
 import type { ImageFormatTarget } from '@shared/domain/image-format-convert'
+import type { VideoFormatTarget } from '@shared/domain/video-format-convert'
 import {
   buildChromaEnhancePartialVideoPath as sharedBuildChromaEnhancePartial,
   buildChromaStagingVideoPath as sharedBuildChromaStaging
@@ -17,6 +18,26 @@ const M4V_EXT = '.m4v'
 const WEBP_EXT = '.webp'
 export const PLAYABLE_VIDEO_EXT = new Set([MP4_EXT, MOV_EXT, WEBM_EXT])
 const COMPRESS_INPUT_EXT = new Set([MP4_EXT, MOV_EXT, WEBM_EXT, MKV_EXT, AVI_EXT, M4V_EXT])
+const GIF_EXT = '.gif'
+const VIDEO_FORMAT_CONVERT_INPUT_EXT = new Set([
+  MP4_EXT,
+  MOV_EXT,
+  WEBM_EXT,
+  MKV_EXT,
+  AVI_EXT,
+  M4V_EXT,
+  GIF_EXT
+])
+
+const VIDEO_FORMAT_OUTPUT_EXT: Record<VideoFormatTarget, string> = {
+  mp4: MP4_EXT,
+  mov: MOV_EXT,
+  webm: WEBM_EXT,
+  mkv: MKV_EXT,
+  avi: AVI_EXT,
+  gif: GIF_EXT,
+  webp_anim: WEBP_EXT
+}
 const AUDIO_EXTRACT_OUT_EXT = new Set(['.m4a', '.mp3', '.wav', '.flac', '.opus', '.ogg'])
 
 export const SMART_CROP_IMAGE_INPUT_EXT = new Set([
@@ -80,6 +101,38 @@ export function validateCompressInputPath(inputPath: string): string {
   const ext = extname(abs).toLowerCase()
   if (!COMPRESS_INPUT_EXT.has(ext)) {
     throw new Error('Unsupported input type for compression')
+  }
+  return abs
+}
+
+export function validateVideoFormatConvertInputPath(inputPath: string): string {
+  const abs = assertAbsolute(inputPath, 'Input')
+  if (!existsSync(abs)) {
+    throw new Error('Input file does not exist')
+  }
+  if (!statSync(abs).isFile()) {
+    throw new Error('Input path must be a file')
+  }
+  const ext = extname(abs).toLowerCase()
+  if (!VIDEO_FORMAT_CONVERT_INPUT_EXT.has(ext)) {
+    throw new Error('Định dạng video đầu vào không được hỗ trợ cho chuyển đổi.')
+  }
+  return abs
+}
+
+export function validateVideoFormatConvertOutputPath(
+  outputPath: string,
+  format: VideoFormatTarget
+): string {
+  const abs = assertAbsolute(outputPath, 'Output')
+  const want = VIDEO_FORMAT_OUTPUT_EXT[format]
+  const ext = extname(abs).toLowerCase()
+  if (ext !== want) {
+    throw new Error(`Đường dẫn đầu ra phải có phần mở rộng ${want} cho định dạng "${format}".`)
+  }
+  const dir = dirname(abs)
+  if (!existsSync(dir)) {
+    throw new Error(`Thư mục đầu ra không tồn tại: ${dir}`)
   }
   return abs
 }

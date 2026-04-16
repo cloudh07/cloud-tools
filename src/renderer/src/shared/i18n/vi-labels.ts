@@ -144,7 +144,7 @@ export function batchStatusLabelVi(
 ): string {
   switch (status) {
     case 'idle':
-      return 'Sẵn sàng'
+      return 'Idle'
     case 'queued':
       return 'Đang xếp hàng'
     case 'processing':

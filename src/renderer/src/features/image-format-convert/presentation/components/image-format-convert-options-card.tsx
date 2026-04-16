@@ -25,7 +25,7 @@ import {
 import { Slider } from '@/shared/presentation/components/ui/slider'
 import type { ImageFormatTarget } from '@shared/domain/image-format-convert'
 import { IMAGE_FORMAT_TARGETS } from '@shared/domain/image-format-convert'
-import { FolderOpen, Play, Square } from 'lucide-react'
+import { FolderOpen, Square, Wand2 } from 'lucide-react'
 import type { ReactElement } from 'react'
 
 export type ImageFormatConvertOptionsCardProps = {
@@ -234,8 +234,12 @@ export function ImageFormatConvertOptionsCard({
 
         <div className="flex flex-wrap gap-2">
           <Button type="button" disabled={!canStart} onClick={() => void onRun()}>
-            {busy ? <Spinner className="size-4" /> : <Play className="mr-2 size-4" />}
-            Bắt đầu chuyển đổi
+            {busy ? (
+              <Spinner className="size-4" aria-hidden />
+            ) : (
+              <Wand2 className="size-4" aria-hidden />
+            )}
+            Bắt đầu
           </Button>
           <Button type="button" variant="outline" disabled={!busy} onClick={onCancel}>
             <Square className="mr-2 size-4" />

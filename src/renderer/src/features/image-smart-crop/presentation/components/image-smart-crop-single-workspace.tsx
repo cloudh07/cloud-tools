@@ -42,7 +42,7 @@ import type {
 } from '@shared/domain/image-smart-crop'
 import { outputFormatSupportsAlpha } from '@shared/domain/image-smart-crop'
 import { useRouteContext } from '@tanstack/react-router'
-import { FolderOpen, Play, Square } from 'lucide-react'
+import { FolderOpen, Square, Wand2 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react'
 import { toast } from 'sonner'
 
@@ -480,7 +480,11 @@ export function ImageSmartCropSingleWorkspace({
                     disabled={!ui.analysis || busy || busyAnalyze}
                     onClick={() => void pickOutputThenStart()}
                   >
-                    {busy ? <Spinner className="size-4" /> : <Play className="size-4" />}
+                    {busy ? (
+                      <Spinner className="size-4" aria-hidden />
+                    ) : (
+                      <Wand2 className="size-4" aria-hidden />
+                    )}
                     Bắt đầu
                   </Button>
                   <Button

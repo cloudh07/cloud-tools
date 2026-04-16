@@ -29,6 +29,12 @@ import type {
   VideoProbeResult
 } from '@shared/domain/video-job'
 import type { AppUpdateEvent } from '@shared/domain/app-update'
+import type {
+  StartVideoFormatConvertJobRequest,
+  VideoFormatConvertJobEvent,
+  VideoFormatConvertProbeResult,
+  VideoFormatTarget
+} from '@shared/domain/video-format-convert'
 
 const shellOpenPath = (filePath: string): Promise<void> =>
   ipcRenderer.invoke(IpcChannels.SHELL_OPEN_EXISTING_FILE, filePath)
@@ -196,7 +202,25 @@ const desktopApi = {
     return () => {
       ipcRenderer.removeListener(IpcChannels.IMAGE_FORMAT_CONVERT_EVENT, listener)
     }
-  }
+  },
+  probeVideoFormatConvert: (inputPath: string): Promise<VideoFormatConvertProbeResult> =>
+    ipcRenderer.invoke(IpcChannels.VIDEO_FORMAT_CONVERT_PROBE, inputPath),
+  startVideoFormatConvertJob: (req: StartVideoFormatConvertJobRequest): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.VIDEO_FORMAT_CONVERT_START, req),
+  cancelVideoFormatConvertJob: (jobId: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.VIDEO_FORMAT_CONVERT_CANCEL, jobId),
+  onVideoFormatConvertJobEvent: (cb: (event: VideoFormatConvertJobEvent) => void): (() => void) => {
+    const listener = (_event: unknown, data: VideoFormatConvertJobEvent): void => cb(data)
+    ipcRenderer.on(IpcChannels.VIDEO_FORMAT_CONVERT_EVENT, listener)
+    return () => {
+      ipcRenderer.removeListener(IpcChannels.VIDEO_FORMAT_CONVERT_EVENT, listener)
+    }
+  },
+  pickVideoFormatSavePath: (payload: {
+    defaultPath: string
+    format: VideoFormatTarget
+  }): Promise<string | null> =>
+    ipcRenderer.invoke(IpcChannels.DIALOG_SELECT_VIDEO_FORMAT_SAVE, payload)
 }
 
 if (process.contextIsolated) {

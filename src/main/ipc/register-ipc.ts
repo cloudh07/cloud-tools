@@ -30,9 +30,20 @@ import {
   probeAudioStreamsForApp
 } from '@main/application/video/media-probe.use-case'
 import { VideoJobManager } from '@main/application/video/video-job-manager'
+import { VideoFormatConvertManager } from '@main/application/video/video-format-convert-manager'
+import {
+  parseStartVideoFormatConvertJobPayload,
+  parseVideoFormatConvertJobId
+} from '@main/application/security/video-format-convert.validation'
 import { AppConfigStore } from '@main/infrastructure/config/app-config-store'
-import { toFileUrlForMedia } from '@main/infrastructure/ffmpeg/ffprobe-service'
-import { invalidateMediaBinaryResolverCache } from '@main/infrastructure/media/media-binary-resolver'
+import {
+  probeVideoForFormatConvert,
+  toFileUrlForMedia
+} from '@main/infrastructure/ffmpeg/ffprobe-service'
+import {
+  getMediaBinaryResolver,
+  invalidateMediaBinaryResolverCache
+} from '@main/infrastructure/media/media-binary-resolver'
 import { probeImageForFormatConvert } from '@main/infrastructure/image/image-format-convert-sharp-service'
 import { analyzeSmartCropImage } from '@main/infrastructure/image/smart-crop-sharp-service'
 import { scanFolderForDrop } from '@main/infrastructure/fs/scan-folder-for-drop'
@@ -42,10 +53,12 @@ import {
   validateExistingDirectoryPath,
   validateExistingFilePath,
   validateMp4InputPath,
-  validateOutputDirectoryPath
+  validateOutputDirectoryPath,
+  validateVideoFormatConvertInputPath
 } from '@main/infrastructure/fs/path-validator'
 import { IpcChannels } from '@shared/constants/ipc-channels'
 import type { AppConfig } from '@shared/domain/app-config'
+import type { VideoFormatTarget } from '@shared/domain/video-format-convert'
 import type { FolderDropScanResult } from '@shared/domain/folder-drop-scan'
 import type { ImageSmartCropOutputFormat } from '@shared/domain/image-smart-crop'
 import {
@@ -67,6 +80,7 @@ export function registerIpcHandlers(params: {
   const smartCropManager = new SmartCropJobManager(() => params.getMainWindow())
   const smartCropBatchManager = new SmartCropBatchManager(() => params.getMainWindow())
   const imageFormatConvertManager = new ImageFormatConvertManager(() => params.getMainWindow())
+  const videoFormatConvertManager = new VideoFormatConvertManager(() => params.getMainWindow())
 
   ipcMain.handle(IpcChannels.CONFIG_GET, () => {
     return params.configStore.read()
@@ -386,4 +400,44 @@ export function registerIpcHandlers(params: {
     imageFormatConvertManager.cancel(parseImageFormatConvertBatchId(batchId))
     return { ok: true as const }
   })
+
+  ipcMain.handle(IpcChannels.VIDEO_FORMAT_CONVERT_PROBE, async (_event, raw: unknown) => {
+    if (typeof raw !== 'string' || !raw.trim()) {
+      throw new Error('Đường dẫn video không hợp lệ')
+    }
+    const cfg = params.configStore.read()
+    const input = validateVideoFormatConvertInputPath(raw.trim())
+    const resolver = getMediaBinaryResolver()
+    const ffprobe = resolver.resolveFfprobeOrThrow(cfg)
+    return probeVideoForFormatConvert(ffprobe.path, input)
+  })
+
+  ipcMain.handle(IpcChannels.VIDEO_FORMAT_CONVERT_START, async (_event, raw: unknown) => {
+    const parsed = parseStartVideoFormatConvertJobPayload(raw)
+    const cfg = params.configStore.read()
+    void videoFormatConvertManager.start(cfg, parsed)
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.VIDEO_FORMAT_CONVERT_CANCEL, (_event, jobId: unknown) => {
+    videoFormatConvertManager.cancel(parseVideoFormatConvertJobId(jobId))
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(
+    IpcChannels.DIALOG_SELECT_VIDEO_FORMAT_SAVE,
+    async (_event, payload: { defaultPath: string; format: VideoFormatTarget }) => {
+      const win = params.getMainWindow()
+      if (!win) return null
+      const ext =
+        payload.format === 'webp_anim' ? 'webp' : payload.format === 'mov' ? 'mov' : payload.format
+      const label = payload.format === 'webp_anim' ? 'WebP động' : payload.format.toUpperCase()
+      const result = await dialog.showSaveDialog(win, {
+        defaultPath: payload.defaultPath,
+        filters: [{ name: label, extensions: [ext] }]
+      })
+      if (result.canceled || !result.filePath) return null
+      return result.filePath
+    }
+  )
 }

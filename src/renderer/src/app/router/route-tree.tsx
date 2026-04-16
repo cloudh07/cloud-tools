@@ -104,11 +104,12 @@ const imageSmartCropRoute = createRoute({
 const imageFormatConvertRoute = createRoute({
   getParentRoute: () => toolsRoute,
   path: 'image-format-convert',
-  staticData: { breadcrumb: 'Đổi định dạng ảnh' } satisfies RouteBreadcrumbStatic,
+  staticData: { breadcrumb: 'Đổi định dạng' } satisfies RouteBreadcrumbStatic,
   context: (): ImageFormatConvertRouteContextSlice => ({
     imageFormatConvert: {
       slug: 'image-format-convert',
-      title: 'Đổi định dạng ảnh'
+      title: 'Đổi định dạng',
+      pageTitle: 'Đổi định dạng'
     }
   }),
   validateSearch: parseImageFormatConvertSearch,
