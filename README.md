@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Cloud Tools
 
 Windows-friendly Electron toolbox built with [electron-vite](https://electron-vite.org/), React 19, TypeScript, Tailwind CSS v4, and shadcn-style UI primitives (Radix).
