@@ -1,0 +1,5 @@
+provider: github
+owner: cloudh07
+repo: cloud-tools-artifacts
+releaseType: release
+updaterCacheDirName: cloud-tools-updater
