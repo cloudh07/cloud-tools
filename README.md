@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Cloud Tools
 
 Windows-friendly Electron toolbox built with [electron-vite](https://electron-vite.org/), React 19, TypeScript, Tailwind CSS v4, and shadcn-style UI primitives (Radix).
@@ -87,5 +86,3 @@ Optional **WebP** export runs as a second ffmpeg pass from the intermediate file
 - Presets persisted per tool and project files
 - Automated tests around ffmpeg graph building and progress parsing
 =======
-# cloud-tools
->>>>>>> cc1027f0504c4eea819d12ae222fe42e91435930
