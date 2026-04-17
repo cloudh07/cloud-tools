@@ -20,6 +20,24 @@ import type {
   StartImageFormatConvertBatchRequest
 } from './image-format-convert'
 import type {
+  ImageWatermarkBatchEvent,
+  ImageWatermarkPreviewRequest,
+  ImageWatermarkPreviewResult,
+  StartImageWatermarkBatchRequest
+} from './image-watermark'
+import type {
+  StartWatermarkRemoveBatchRequest,
+  WatermarkRemoveAutoDetectRequest,
+  WatermarkRemoveAutoDetectResult,
+  WatermarkRemoveBatchEvent,
+  WatermarkRemoveModelEvent,
+  WatermarkRemoveModelId,
+  WatermarkRemoveModelStatus,
+  WatermarkRemovePreviewRequest,
+  WatermarkRemovePreviewResult,
+  WatermarkRemoveProbeResult
+} from './watermark-remove'
+import type {
   ImageSmartCropBatchEvent,
   StartImageSmartCropBatchRequest
 } from './image-smart-crop-batch'
@@ -89,4 +107,28 @@ export type DesktopBridge = {
     defaultPath: string
     format: VideoFormatTarget
   }) => Promise<string | null>
+  pickWatermarkLogoFile: () => Promise<string | null>
+  probeImageWatermark: (inputPath: string) => Promise<ImageFormatProbeResult>
+  renderImageWatermarkPreview: (
+    req: ImageWatermarkPreviewRequest
+  ) => Promise<ImageWatermarkPreviewResult>
+  startImageWatermarkBatch: (req: StartImageWatermarkBatchRequest) => Promise<{ ok: true }>
+  cancelImageWatermarkBatch: (batchId: string) => Promise<{ ok: true }>
+  onImageWatermarkBatchEvent: (cb: (event: ImageWatermarkBatchEvent) => void) => () => void
+  listSystemFonts: (refresh?: boolean) => Promise<string[]>
+  pickWatermarkRemoveMedia: (kind: 'image' | 'video') => Promise<string | null>
+  probeWatermarkRemoveMedia: (inputPath: string) => Promise<WatermarkRemoveProbeResult>
+  renderWatermarkRemovePreview: (
+    req: WatermarkRemovePreviewRequest
+  ) => Promise<WatermarkRemovePreviewResult>
+  autoDetectWatermark: (
+    req: WatermarkRemoveAutoDetectRequest
+  ) => Promise<WatermarkRemoveAutoDetectResult>
+  startWatermarkRemoveBatch: (req: StartWatermarkRemoveBatchRequest) => Promise<{ ok: true }>
+  cancelWatermarkRemoveBatch: (batchId: string) => Promise<{ ok: true }>
+  onWatermarkRemoveBatchEvent: (cb: (event: WatermarkRemoveBatchEvent) => void) => () => void
+  getWatermarkRemoveModelStatus: (id: WatermarkRemoveModelId) => Promise<WatermarkRemoveModelStatus>
+  downloadWatermarkRemoveModel: (id: WatermarkRemoveModelId) => Promise<{ ok: true }>
+  deleteWatermarkRemoveModel: (id: WatermarkRemoveModelId) => Promise<{ ok: true }>
+  onWatermarkRemoveModelEvent: (cb: (event: WatermarkRemoveModelEvent) => void) => () => void
 }

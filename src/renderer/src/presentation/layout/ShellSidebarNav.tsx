@@ -15,6 +15,7 @@ import {
   Headphones,
   LayoutGrid,
   Settings2,
+  Stamp,
   type LucideIcon
 } from 'lucide-react'
 import { useId, useState, type ReactElement } from 'react'
@@ -25,6 +26,7 @@ const LEAF_ICONS: Record<string, LucideIcon> = {
   'audio-extract': Headphones,
   'image-smart-crop': Crop,
   'image-format-convert': FileImage,
+  'image-watermark': Stamp,
   settings: Settings2
 }
 

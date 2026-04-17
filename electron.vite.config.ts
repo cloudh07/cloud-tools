@@ -53,7 +53,7 @@ export default defineConfig({
         exclude: ['archiver', 'electron-updater']
       },
       rollupOptions: {
-        external: ['sharp']
+        external: ['sharp', 'onnxruntime-node']
       }
     }
   },

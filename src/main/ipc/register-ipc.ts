@@ -1,5 +1,6 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { ImageFormatConvertManager } from '@main/application/image/image-format-convert-manager'
+import { ImageWatermarkManager } from '@main/application/image/image-watermark-manager'
 import { SmartCropBatchManager } from '@main/application/image/smart-crop-batch-manager'
 import { SmartCropJobManager } from '@main/application/image/smart-crop-job-manager'
 import {
@@ -44,7 +45,12 @@ import {
   getMediaBinaryResolver,
   invalidateMediaBinaryResolverCache
 } from '@main/infrastructure/media/media-binary-resolver'
+import { listInstalledFontFamilies } from '@main/infrastructure/fonts/system-fonts-service'
 import { probeImageForFormatConvert } from '@main/infrastructure/image/image-format-convert-sharp-service'
+import {
+  probeImageForWatermark,
+  renderImageWatermarkPreview
+} from '@main/infrastructure/image/image-watermark-sharp-service'
 import { analyzeSmartCropImage } from '@main/infrastructure/image/smart-crop-sharp-service'
 import { scanFolderForDrop } from '@main/infrastructure/fs/scan-folder-for-drop'
 import { scanImageFolderForSmartCrop } from '@main/infrastructure/fs/scan-image-folder'
@@ -69,6 +75,29 @@ import {
   parseImageSmartCropBatchId,
   parseStartImageSmartCropBatchPayload
 } from '@main/application/security/image-smart-crop-batch.validation'
+import {
+  parseImageWatermarkBatchId,
+  parseImageWatermarkPreviewPayload,
+  parseStartImageWatermarkBatchPayload
+} from '@main/application/security/image-watermark.validation'
+import {
+  parseStartWatermarkRemoveBatchPayload,
+  parseWatermarkRemoveAutoDetectPayload,
+  parseWatermarkRemoveBatchId,
+  parseWatermarkRemoveMediaKind,
+  parseWatermarkRemoveModelId,
+  parseWatermarkRemovePreviewPayload
+} from '@main/application/security/watermark-remove.validation'
+import { WatermarkRemoveManager } from '@main/application/watermark-remove/watermark-remove-manager'
+import { autoDetectWatermark } from '@main/infrastructure/watermark-remove/auto-detect'
+import { renderWatermarkRemovePreview } from '@main/infrastructure/watermark-remove/watermark-remove-preview'
+import { probeWatermarkRemoveMedia } from '@main/infrastructure/watermark-remove/watermark-remove-probe'
+import {
+  configureModelManager,
+  deleteModel as deleteWatermarkRemoveModel,
+  getModelStatus as getWatermarkRemoveModelStatus,
+  startModelDownload as startWatermarkRemoveModelDownload
+} from '@main/infrastructure/models/model-manager'
 
 export function registerIpcHandlers(params: {
   getMainWindow: () => BrowserWindow | null
@@ -80,7 +109,10 @@ export function registerIpcHandlers(params: {
   const smartCropManager = new SmartCropJobManager(() => params.getMainWindow())
   const smartCropBatchManager = new SmartCropBatchManager(() => params.getMainWindow())
   const imageFormatConvertManager = new ImageFormatConvertManager(() => params.getMainWindow())
+  const imageWatermarkManager = new ImageWatermarkManager(() => params.getMainWindow())
   const videoFormatConvertManager = new VideoFormatConvertManager(() => params.getMainWindow())
+  const watermarkRemoveManager = new WatermarkRemoveManager(() => params.getMainWindow())
+  configureModelManager(() => params.getMainWindow())
 
   ipcMain.handle(IpcChannels.CONFIG_GET, () => {
     return params.configStore.read()
@@ -440,4 +472,106 @@ export function registerIpcHandlers(params: {
       return result.filePath
     }
   )
+
+  ipcMain.handle(IpcChannels.DIALOG_SELECT_WATERMARK_LOGO, async () => {
+    const win = params.getMainWindow()
+    if (!win) return null
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'Logo', extensions: ['png', 'svg', 'webp'] }]
+    })
+    if (result.canceled) return null
+    return result.filePaths[0] ?? null
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_WATERMARK_PROBE, async (_event, raw: unknown) => {
+    if (typeof raw !== 'string' || !raw.trim()) {
+      throw new Error('Đường dẫn ảnh không hợp lệ')
+    }
+    return probeImageForWatermark(raw.trim())
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_WATERMARK_PREVIEW, async (_event, raw: unknown) => {
+    const parsed = parseImageWatermarkPreviewPayload(raw)
+    return renderImageWatermarkPreview(parsed)
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_WATERMARK_START, async (_event, raw: unknown) => {
+    const parsed = parseStartImageWatermarkBatchPayload(raw)
+    imageWatermarkManager.enqueue(parsed)
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_WATERMARK_CANCEL, (_event, batchId: unknown) => {
+    imageWatermarkManager.cancel(parseImageWatermarkBatchId(batchId))
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_PICK_MEDIA, async (_event, raw: unknown) => {
+    const win = params.getMainWindow()
+    if (!win) return null
+    const kind = parseWatermarkRemoveMediaKind(raw)
+    const filters =
+      kind === 'image'
+        ? [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'webp', 'bmp'] }]
+        : [{ name: 'Videos', extensions: ['mp4', 'mov', 'webm', 'mkv', 'm4v'] }]
+    const result = await dialog.showOpenDialog(win, { properties: ['openFile'], filters })
+    if (result.canceled) return null
+    return result.filePaths[0] ?? null
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_PROBE, async (_event, raw: unknown) => {
+    if (typeof raw !== 'string' || !raw.trim()) {
+      throw new Error('Đường dẫn không hợp lệ')
+    }
+    const cfg = params.configStore.read()
+    return probeWatermarkRemoveMedia(cfg, raw.trim())
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_PREVIEW, async (_event, raw: unknown) => {
+    const parsed = parseWatermarkRemovePreviewPayload(raw)
+    const cfg = params.configStore.read()
+    return renderWatermarkRemovePreview(cfg, parsed)
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_AUTO_DETECT, async (_event, raw: unknown) => {
+    const parsed = parseWatermarkRemoveAutoDetectPayload(raw)
+    const cfg = params.configStore.read()
+    return autoDetectWatermark(cfg, parsed)
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_START_BATCH, (_event, raw: unknown) => {
+    const parsed = parseStartWatermarkRemoveBatchPayload(raw)
+    const cfg = params.configStore.read()
+    watermarkRemoveManager.enqueue(cfg, parsed)
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_CANCEL, (_event, raw: unknown) => {
+    watermarkRemoveManager.cancel(parseWatermarkRemoveBatchId(raw))
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_MODEL_STATUS, async (_event, raw: unknown) => {
+    return getWatermarkRemoveModelStatus(parseWatermarkRemoveModelId(raw))
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_MODEL_DOWNLOAD, async (_event, raw: unknown) => {
+    const id = parseWatermarkRemoveModelId(raw)
+    startWatermarkRemoveModelDownload(id).catch(() => {})
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.WATERMARK_REMOVE_MODEL_DELETE, async (_event, raw: unknown) => {
+    await deleteWatermarkRemoveModel(parseWatermarkRemoveModelId(raw))
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.FONTS_LIST_INSTALLED, async (_event, payload: unknown) => {
+    const refresh =
+      typeof payload === 'object' &&
+      payload !== null &&
+      (payload as { refresh?: unknown }).refresh === true
+    return listInstalledFontFamilies(refresh)
+  })
 }

@@ -9,6 +9,10 @@ import { parseImageSmartCropSearch } from '@/features/image-smart-crop/applicati
 import type { ImageFormatConvertRouteContextSlice } from '@/features/image-format-convert/domain/image-format-convert-route-context'
 import { parseImageFormatConvertSearch } from '@/features/image-format-convert/application/image-format-convert-search.schema'
 import { ImageFormatConvertPage } from '@/features/image-format-convert/presentation/pages/ImageFormatConvertPage'
+import type { ImageWatermarkRouteContextSlice } from '@/features/image-watermark/domain/image-watermark-route-context'
+import { ImageWatermarkPage } from '@/features/image-watermark/presentation/pages/ImageWatermarkPage'
+import type { WatermarkRemoveRouteContextSlice } from '@/features/watermark-remove/domain/watermark-remove-route-context'
+import { WatermarkRemovePage } from '@/features/watermark-remove/presentation/pages/WatermarkRemovePage'
 import type { ImageSmartCropRouteContextSlice } from '@/features/image-smart-crop/domain/image-smart-crop-route-context'
 import { ImageSmartCropPage } from '@/features/image-smart-crop/presentation/pages/ImageSmartCropPage'
 import type { VideoCompressRouteContextSlice } from '@/features/video-compress/domain/video-compress-route-context'
@@ -116,6 +120,34 @@ const imageFormatConvertRoute = createRoute({
   component: ImageFormatConvertPage
 })
 
+const imageWatermarkRoute = createRoute({
+  getParentRoute: () => toolsRoute,
+  path: 'image-watermark',
+  staticData: { breadcrumb: 'Gắn watermark' } satisfies RouteBreadcrumbStatic,
+  context: (): ImageWatermarkRouteContextSlice => ({
+    imageWatermark: {
+      slug: 'image-watermark',
+      title: 'Gắn watermark',
+      pageTitle: 'Gắn watermark'
+    }
+  }),
+  component: ImageWatermarkPage
+})
+
+const watermarkRemoveRoute = createRoute({
+  getParentRoute: () => toolsRoute,
+  path: 'watermark-remove',
+  staticData: { breadcrumb: 'Xóa watermark' } satisfies RouteBreadcrumbStatic,
+  context: (): WatermarkRemoveRouteContextSlice => ({
+    watermarkRemove: {
+      slug: 'watermark-remove',
+      title: 'Xóa watermark',
+      pageTitle: 'Xóa watermark'
+    }
+  }),
+  component: WatermarkRemovePage
+})
+
 const imageSmartCropBatchRedirectRoute = createRoute({
   getParentRoute: () => toolsRoute,
   path: 'image-smart-crop-batch',
@@ -143,6 +175,8 @@ export const routeTree = rootRoute.addChildren([
     audioExtractRoute,
     imageSmartCropRoute,
     imageFormatConvertRoute,
+    imageWatermarkRoute,
+    watermarkRemoveRoute,
     imageSmartCropBatchRedirectRoute
   ]),
   settingsRoute

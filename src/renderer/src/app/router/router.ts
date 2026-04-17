@@ -6,7 +6,7 @@ const history = createHashHistory()
 
 const routerContext: AppRouterContext = {
   appName: 'Bộ công cụ',
-  appVersion: '1.0.5'
+  appVersion: '1.0.6'
 }
 
 export const appRouter = createRouter({

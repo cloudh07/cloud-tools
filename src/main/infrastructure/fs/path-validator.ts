@@ -315,3 +315,64 @@ export function validateFormatConvertOutputPath(
   }
   return abs
 }
+
+const WATERMARK_OUTPUT_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp'])
+
+export function validateImageWatermarkOutputPath(outputPath: string): string {
+  const abs = assertAbsolute(outputPath, 'Output')
+  const ext = extname(abs).toLowerCase()
+  if (!WATERMARK_OUTPUT_EXT.has(ext)) {
+    throw new Error(
+      `Đường dẫn đầu ra phải kết thúc bằng .jpg, .jpeg, .png hoặc .webp (nhận: ${ext || '(none)'}).`
+    )
+  }
+  const dir = dirname(abs)
+  if (!existsSync(dir)) {
+    throw new Error(`Thư mục đầu ra không tồn tại: ${dir}`)
+  }
+  return abs
+}
+
+const WATERMARK_REMOVE_IMAGE_INPUT_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp', '.bmp'])
+const WATERMARK_REMOVE_VIDEO_INPUT_EXT = new Set(['.mp4', '.mov', '.webm', '.mkv', '.m4v'])
+const WATERMARK_REMOVE_IMAGE_OUTPUT_EXT = new Set(['.png', '.jpg', '.jpeg', '.webp'])
+const WATERMARK_REMOVE_VIDEO_OUTPUT_EXT = new Set(['.mp4', '.mov', '.webm', '.mkv'])
+
+export function classifyWatermarkRemoveMediaKind(filePath: string): 'image' | 'video' | null {
+  const ext = extname(filePath).toLowerCase()
+  if (WATERMARK_REMOVE_IMAGE_INPUT_EXT.has(ext)) return 'image'
+  if (WATERMARK_REMOVE_VIDEO_INPUT_EXT.has(ext)) return 'video'
+  return null
+}
+
+export function validateWatermarkRemoveInputPath(
+  inputPath: string,
+  expected: 'image' | 'video'
+): string {
+  const abs = assertAbsolute(inputPath, 'Input')
+  if (!existsSync(abs)) throw new Error('Input file does not exist')
+  if (!statSync(abs).isFile()) throw new Error('Input path must be a file')
+  const ext = extname(abs).toLowerCase()
+  const set =
+    expected === 'image' ? WATERMARK_REMOVE_IMAGE_INPUT_EXT : WATERMARK_REMOVE_VIDEO_INPUT_EXT
+  if (!set.has(ext)) {
+    throw new Error(`Định dạng không hỗ trợ cho xóa watermark ${expected}: ${ext || '(none)'}`)
+  }
+  return abs
+}
+
+export function validateWatermarkRemoveOutputPath(
+  outputPath: string,
+  expected: 'image' | 'video'
+): string {
+  const abs = assertAbsolute(outputPath, 'Output')
+  const ext = extname(abs).toLowerCase()
+  const set =
+    expected === 'image' ? WATERMARK_REMOVE_IMAGE_OUTPUT_EXT : WATERMARK_REMOVE_VIDEO_OUTPUT_EXT
+  if (!set.has(ext)) {
+    throw new Error(`Đường dẫn đầu ra cho ${expected} không hợp lệ (nhận: ${ext || '(none)'}).`)
+  }
+  const dir = dirname(abs)
+  if (!existsSync(dir)) throw new Error(`Thư mục đầu ra không tồn tại: ${dir}`)
+  return abs
+}

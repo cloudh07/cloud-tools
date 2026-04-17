@@ -42,9 +42,27 @@ export const IpcChannels = {
   VIDEO_FORMAT_CONVERT_CANCEL: 'video-format-convert:cancel',
   VIDEO_FORMAT_CONVERT_EVENT: 'video-format-convert:event',
   DIALOG_SELECT_VIDEO_FORMAT_SAVE: 'app:dialog:select-video-format-save',
+  DIALOG_SELECT_WATERMARK_LOGO: 'app:dialog:select-watermark-logo',
+  IMAGE_WATERMARK_PROBE: 'image-watermark:probe',
+  IMAGE_WATERMARK_PREVIEW: 'image-watermark:preview',
+  IMAGE_WATERMARK_START: 'image-watermark:start',
+  IMAGE_WATERMARK_CANCEL: 'image-watermark:cancel',
+  IMAGE_WATERMARK_EVENT: 'image-watermark:event',
   APP_UPDATE_CHECK: 'app:update:check',
   APP_UPDATE_INSTALL: 'app:update:install',
-  APP_UPDATE_EVENT: 'app:update:event'
+  APP_UPDATE_EVENT: 'app:update:event',
+  FONTS_LIST_INSTALLED: 'fonts:list-installed',
+  WATERMARK_REMOVE_PROBE: 'watermark-remove:probe',
+  WATERMARK_REMOVE_PREVIEW: 'watermark-remove:preview',
+  WATERMARK_REMOVE_START_BATCH: 'watermark-remove:start-batch',
+  WATERMARK_REMOVE_CANCEL: 'watermark-remove:cancel',
+  WATERMARK_REMOVE_EVENT: 'watermark-remove:event',
+  WATERMARK_REMOVE_AUTO_DETECT: 'watermark-remove:auto-detect',
+  WATERMARK_REMOVE_PICK_MEDIA: 'watermark-remove:pick-media',
+  WATERMARK_REMOVE_MODEL_STATUS: 'watermark-remove:model-status',
+  WATERMARK_REMOVE_MODEL_DOWNLOAD: 'watermark-remove:model-download',
+  WATERMARK_REMOVE_MODEL_DELETE: 'watermark-remove:model-delete',
+  WATERMARK_REMOVE_MODEL_EVENT: 'watermark-remove:model-event'
 } as const
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels]

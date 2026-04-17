@@ -20,6 +20,24 @@ import type {
   StartImageFormatConvertBatchRequest
 } from '@shared/domain/image-format-convert'
 import type {
+  ImageWatermarkBatchEvent,
+  ImageWatermarkPreviewRequest,
+  ImageWatermarkPreviewResult,
+  StartImageWatermarkBatchRequest
+} from '@shared/domain/image-watermark'
+import type {
+  StartWatermarkRemoveBatchRequest,
+  WatermarkRemoveAutoDetectRequest,
+  WatermarkRemoveAutoDetectResult,
+  WatermarkRemoveBatchEvent,
+  WatermarkRemoveModelEvent,
+  WatermarkRemoveModelId,
+  WatermarkRemoveModelStatus,
+  WatermarkRemovePreviewRequest,
+  WatermarkRemovePreviewResult,
+  WatermarkRemoveProbeResult
+} from '@shared/domain/watermark-remove'
+import type {
   ImageSmartCropBatchEvent,
   StartImageSmartCropBatchRequest
 } from '@shared/domain/image-smart-crop-batch'
@@ -220,7 +238,66 @@ const desktopApi = {
     defaultPath: string
     format: VideoFormatTarget
   }): Promise<string | null> =>
-    ipcRenderer.invoke(IpcChannels.DIALOG_SELECT_VIDEO_FORMAT_SAVE, payload)
+    ipcRenderer.invoke(IpcChannels.DIALOG_SELECT_VIDEO_FORMAT_SAVE, payload),
+  pickWatermarkLogoFile: (): Promise<string | null> =>
+    ipcRenderer.invoke(IpcChannels.DIALOG_SELECT_WATERMARK_LOGO),
+  probeImageWatermark: (inputPath: string): Promise<ImageFormatProbeResult> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_WATERMARK_PROBE, inputPath),
+  renderImageWatermarkPreview: (
+    req: ImageWatermarkPreviewRequest
+  ): Promise<ImageWatermarkPreviewResult> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_WATERMARK_PREVIEW, req),
+  startImageWatermarkBatch: (req: StartImageWatermarkBatchRequest): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_WATERMARK_START, req),
+  cancelImageWatermarkBatch: (batchId: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_WATERMARK_CANCEL, batchId),
+  onImageWatermarkBatchEvent: (cb: (event: ImageWatermarkBatchEvent) => void): (() => void) => {
+    const listener = (_event: unknown, data: ImageWatermarkBatchEvent): void => cb(data)
+    ipcRenderer.on(IpcChannels.IMAGE_WATERMARK_EVENT, listener)
+    return () => {
+      ipcRenderer.removeListener(IpcChannels.IMAGE_WATERMARK_EVENT, listener)
+    }
+  },
+  listSystemFonts: (refresh?: boolean): Promise<string[]> =>
+    ipcRenderer.invoke(IpcChannels.FONTS_LIST_INSTALLED, { refresh: refresh === true }),
+  pickWatermarkRemoveMedia: (kind: 'image' | 'video'): Promise<string | null> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_PICK_MEDIA, kind),
+  probeWatermarkRemoveMedia: (inputPath: string): Promise<WatermarkRemoveProbeResult> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_PROBE, inputPath),
+  renderWatermarkRemovePreview: (
+    req: WatermarkRemovePreviewRequest
+  ): Promise<WatermarkRemovePreviewResult> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_PREVIEW, req),
+  autoDetectWatermark: (
+    req: WatermarkRemoveAutoDetectRequest
+  ): Promise<WatermarkRemoveAutoDetectResult> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_AUTO_DETECT, req),
+  startWatermarkRemoveBatch: (req: StartWatermarkRemoveBatchRequest): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_START_BATCH, req),
+  cancelWatermarkRemoveBatch: (batchId: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_CANCEL, batchId),
+  onWatermarkRemoveBatchEvent: (cb: (event: WatermarkRemoveBatchEvent) => void): (() => void) => {
+    const listener = (_event: unknown, data: WatermarkRemoveBatchEvent): void => cb(data)
+    ipcRenderer.on(IpcChannels.WATERMARK_REMOVE_EVENT, listener)
+    return () => {
+      ipcRenderer.removeListener(IpcChannels.WATERMARK_REMOVE_EVENT, listener)
+    }
+  },
+  getWatermarkRemoveModelStatus: (
+    id: WatermarkRemoveModelId
+  ): Promise<WatermarkRemoveModelStatus> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_MODEL_STATUS, id),
+  downloadWatermarkRemoveModel: (id: WatermarkRemoveModelId): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_MODEL_DOWNLOAD, id),
+  deleteWatermarkRemoveModel: (id: WatermarkRemoveModelId): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.WATERMARK_REMOVE_MODEL_DELETE, id),
+  onWatermarkRemoveModelEvent: (cb: (event: WatermarkRemoveModelEvent) => void): (() => void) => {
+    const listener = (_event: unknown, data: WatermarkRemoveModelEvent): void => cb(data)
+    ipcRenderer.on(IpcChannels.WATERMARK_REMOVE_MODEL_EVENT, listener)
+    return () => {
+      ipcRenderer.removeListener(IpcChannels.WATERMARK_REMOVE_MODEL_EVENT, listener)
+    }
+  }
 }
 
 if (process.contextIsolated) {
