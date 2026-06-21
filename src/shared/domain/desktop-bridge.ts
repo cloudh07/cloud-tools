@@ -20,6 +20,14 @@ import type {
   StartImageFormatConvertBatchRequest
 } from './image-format-convert'
 import type {
+  DocumentImageThumbnail,
+  DocumentMergeEvent,
+  DocumentOutputFormat,
+  DocumentPdfDescriptor,
+  InspectDocumentImagesResult,
+  StartDocumentMergeRequest
+} from './image-document-merge'
+import type {
   ImageWatermarkBatchEvent,
   ImageWatermarkPreviewRequest,
   ImageWatermarkPreviewResult,
@@ -99,6 +107,18 @@ export type DesktopBridge = {
   startImageFormatConvertBatch: (req: StartImageFormatConvertBatchRequest) => Promise<{ ok: true }>
   cancelImageFormatConvertBatch: (batchId: string) => Promise<{ ok: true }>
   onImageFormatConvertBatchEvent: (cb: (event: ImageFormatConvertBatchEvent) => void) => () => void
+  pickDocumentMergeImages: () => Promise<string[]>
+  pickDocumentMergePdf: () => Promise<string | null>
+  pickDocumentMergeSavePath: (payload: {
+    defaultPath: string
+    format: DocumentOutputFormat
+  }) => Promise<string | null>
+  inspectDocumentMergeImages: (paths: string[]) => Promise<InspectDocumentImagesResult>
+  createDocumentMergeThumbnail: (path: string) => Promise<DocumentImageThumbnail>
+  probeDocumentMergePdf: (path: string) => Promise<DocumentPdfDescriptor>
+  startDocumentMerge: (req: StartDocumentMergeRequest) => Promise<{ ok: true }>
+  cancelDocumentMerge: (jobId: string) => Promise<{ ok: true }>
+  onDocumentMergeEvent: (cb: (event: DocumentMergeEvent) => void) => () => void
   probeVideoFormatConvert: (inputPath: string) => Promise<VideoFormatConvertProbeResult>
   startVideoFormatConvertJob: (req: StartVideoFormatConvertJobRequest) => Promise<{ ok: true }>
   cancelVideoFormatConvertJob: (jobId: string) => Promise<{ ok: true }>

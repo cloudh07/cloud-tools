@@ -1,5 +1,6 @@
 import { BrowserWindow, dialog, ipcMain, shell } from 'electron'
 import { ImageFormatConvertManager } from '@main/application/image/image-format-convert-manager'
+import { ImageDocumentMergeManager } from '@main/application/document/image-document-merge-manager'
 import { ImageWatermarkManager } from '@main/application/image/image-watermark-manager'
 import { SmartCropBatchManager } from '@main/application/image/smart-crop-batch-manager'
 import { SmartCropJobManager } from '@main/application/image/smart-crop-job-manager'
@@ -72,6 +73,18 @@ import {
   parseStartImageFormatConvertBatchPayload
 } from '@main/application/security/image-format-convert.validation'
 import {
+  parseDocumentImagePaths,
+  parseDocumentMergeJobId,
+  parseDocumentPath,
+  parseStartDocumentMergeRequest
+} from '@main/application/security/image-document-merge.validation'
+import {
+  createDocumentImageThumbnail,
+  inspectDocumentImages
+} from '@main/infrastructure/document/document-image-inspector'
+import { inspectDocumentPdf } from '@main/infrastructure/document/document-pdf-inspector'
+import type { DocumentOutputFormat } from '@shared/domain/image-document-merge'
+import {
   parseImageSmartCropBatchId,
   parseStartImageSmartCropBatchPayload
 } from '@main/application/security/image-smart-crop-batch.validation'
@@ -109,6 +122,7 @@ export function registerIpcHandlers(params: {
   const smartCropManager = new SmartCropJobManager(() => params.getMainWindow())
   const smartCropBatchManager = new SmartCropBatchManager(() => params.getMainWindow())
   const imageFormatConvertManager = new ImageFormatConvertManager(() => params.getMainWindow())
+  const imageDocumentMergeManager = new ImageDocumentMergeManager(() => params.getMainWindow())
   const imageWatermarkManager = new ImageWatermarkManager(() => params.getMainWindow())
   const videoFormatConvertManager = new VideoFormatConvertManager(() => params.getMainWindow())
   const watermarkRemoveManager = new WatermarkRemoveManager(() => params.getMainWindow())
@@ -430,6 +444,76 @@ export function registerIpcHandlers(params: {
 
   ipcMain.handle(IpcChannels.IMAGE_FORMAT_CONVERT_CANCEL, (_event, batchId: unknown) => {
     imageFormatConvertManager.cancel(parseImageFormatConvertBatchId(batchId))
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.DIALOG_SELECT_DOCUMENT_IMAGES, async () => {
+    const win = params.getMainWindow()
+    if (!win) return []
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        {
+          name: 'Static images',
+          extensions: ['jpg', 'jpeg', 'png', 'webp', 'avif', 'tif', 'tiff']
+        }
+      ]
+    })
+    return result.canceled ? [] : result.filePaths
+  })
+
+  ipcMain.handle(IpcChannels.DIALOG_SELECT_DOCUMENT_PDF, async () => {
+    const win = params.getMainWindow()
+    if (!win) return null
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openFile'],
+      filters: [{ name: 'PDF document', extensions: ['pdf'] }]
+    })
+    return result.canceled ? null : (result.filePaths[0] ?? null)
+  })
+
+  ipcMain.handle(IpcChannels.DIALOG_SELECT_DOCUMENT_SAVE, async (_event, raw: unknown) => {
+    if (!raw || typeof raw !== 'object') throw new Error('Invalid save dialog payload.')
+    const payload = raw as { defaultPath?: unknown; format?: unknown }
+    if (typeof payload.defaultPath !== 'string' || !payload.defaultPath.trim()) {
+      throw new Error('Invalid default output path.')
+    }
+    if (payload.format !== 'pdf' && payload.format !== 'docx') {
+      throw new Error('Invalid document output format.')
+    }
+    const format = payload.format as DocumentOutputFormat
+    const win = params.getMainWindow()
+    if (!win) return null
+    const result = await dialog.showSaveDialog(win, {
+      defaultPath: payload.defaultPath,
+      filters: [
+        format === 'pdf'
+          ? { name: 'PDF document', extensions: ['pdf'] }
+          : { name: 'Word document', extensions: ['docx'] }
+      ]
+    })
+    return result.canceled ? null : (result.filePath ?? null)
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_DOCUMENT_INSPECT_IMAGES, (_event, raw: unknown) => {
+    return inspectDocumentImages(parseDocumentImagePaths(raw))
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_DOCUMENT_THUMBNAIL, (_event, raw: unknown) => {
+    return createDocumentImageThumbnail(parseDocumentPath(raw))
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_DOCUMENT_PROBE_PDF, (_event, raw: unknown) => {
+    return inspectDocumentPdf(parseDocumentPath(raw))
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_DOCUMENT_MERGE_START, async (_event, raw: unknown) => {
+    await imageDocumentMergeManager.start(parseStartDocumentMergeRequest(raw))
+    return { ok: true as const }
+  })
+
+  ipcMain.handle(IpcChannels.IMAGE_DOCUMENT_MERGE_CANCEL, async (_event, raw: unknown) => {
+    await imageDocumentMergeManager.cancel(parseDocumentMergeJobId(raw))
     return { ok: true as const }
   })
 

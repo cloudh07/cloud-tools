@@ -11,6 +11,7 @@ import {
   Clapperboard,
   Crop,
   FileImage,
+  Files,
   Gauge,
   Headphones,
   LayoutGrid,
@@ -26,6 +27,7 @@ const LEAF_ICONS: Record<string, LucideIcon> = {
   'audio-extract': Headphones,
   'image-smart-crop': Crop,
   'image-format-convert': FileImage,
+  'image-document-merge': Files,
   'image-watermark': Stamp,
   settings: Settings2
 }

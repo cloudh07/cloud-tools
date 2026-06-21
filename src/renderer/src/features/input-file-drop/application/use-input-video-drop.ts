@@ -36,10 +36,7 @@ async function getDroppedFilesPreservingOsPath(
   ) {
     const files = Array.from((event as DragEvent).dataTransfer!.files)
     if (import.meta.env.DEV) {
-      console.debug('[input-video-drop] using DataTransfer.files', {
-        count: files.length,
-        names: files.map((f) => f.name)
-      })
+      console.debug('[input-video-drop] using DataTransfer.files', { count: files.length })
     }
     return files
   }
@@ -116,18 +113,11 @@ export function useInputVideoDrop({
     (files: File[]) => {
       if (disabled || files.length === 0) return
       if (import.meta.env.DEV) {
-        console.debug('[input-video-drop] onDrop', {
-          count: files.length,
-          names: files.map((f) => f.name),
-          sizes: files.map((f) => f.size)
-        })
+        console.debug('[input-video-drop] onDrop', { count: files.length })
       }
       const pathResults = files.map((file) => ({ file, r: readDroppedLocalFilePath(file) }))
       const raw: string[] = []
-      for (const { file, r } of pathResults) {
-        if (import.meta.env.DEV) {
-          console.debug('[input-video-drop] path', file.name, r.ok ? { path: r.path } : r)
-        }
+      for (const { r } of pathResults) {
         if (r.ok) raw.push(r.path)
       }
       if (raw.length === 0) {

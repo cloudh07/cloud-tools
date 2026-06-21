@@ -50,10 +50,8 @@ export default defineConfig({
     },
     build: {
       externalizeDeps: {
-        exclude: ['archiver', 'electron-updater']
-      },
-      rollupOptions: {
-        external: ['sharp', 'onnxruntime-node']
+        exclude: ['archiver', 'electron-updater'],
+        include: ['electron']
       }
     }
   },
@@ -90,6 +88,7 @@ export default defineConfig({
       assetsInlineLimit: 2048,
       reportCompressedSize: false,
       rollupOptions: {
+        input: resolve('src/renderer/index.html'),
         output: {
           manualChunks: rendererManualChunks,
           chunkFileNames: 'assets/[name]-[hash].js',

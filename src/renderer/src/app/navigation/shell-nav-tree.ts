@@ -5,6 +5,7 @@ export const videoCompressLink = linkOptions({ to: '/tools/video-compress' })
 export const audioExtractLink = linkOptions({ to: '/tools/audio-extract' })
 export const imageSmartCropLink = linkOptions({ to: '/tools/image-smart-crop' })
 export const imageFormatConvertLink = linkOptions({ to: '/tools/image-format-convert' })
+export const imageDocumentMergeLink = linkOptions({ to: '/tools/image-document-merge' })
 export const imageWatermarkLink = linkOptions({ to: '/tools/image-watermark' })
 export const watermarkRemoveLink = linkOptions({ to: '/tools/watermark-remove' })
 export const settingsLink = linkOptions({ to: '/settings' })
@@ -18,6 +19,7 @@ export type ShellNavLeaf = {
     | typeof audioExtractLink
     | typeof imageSmartCropLink
     | typeof imageFormatConvertLink
+    | typeof imageDocumentMergeLink
     | typeof imageWatermarkLink
     | typeof watermarkRemoveLink
     | typeof settingsLink
@@ -43,6 +45,7 @@ export const SHELL_NAV_TREE: readonly ShellNavEntry[] = [
       { id: 'audio-extract', label: 'Tách âm thanh', link: audioExtractLink },
       { id: 'image-smart-crop', label: 'Auto-Crop ảnh', link: imageSmartCropLink },
       { id: 'image-format-convert', label: 'Đổi định dạng', link: imageFormatConvertLink },
+      { id: 'image-document-merge', label: 'Ghép PDF/DOCX', link: imageDocumentMergeLink },
       { id: 'image-watermark', label: 'Gắn watermark', link: imageWatermarkLink },
       { id: 'watermark-remove', label: 'Xóa watermark', link: watermarkRemoveLink }
     ]

@@ -20,6 +20,14 @@ import type {
   StartImageFormatConvertBatchRequest
 } from '@shared/domain/image-format-convert'
 import type {
+  DocumentImageThumbnail,
+  DocumentMergeEvent,
+  DocumentOutputFormat,
+  DocumentPdfDescriptor,
+  InspectDocumentImagesResult,
+  StartDocumentMergeRequest
+} from '@shared/domain/image-document-merge'
+import type {
   ImageWatermarkBatchEvent,
   ImageWatermarkPreviewRequest,
   ImageWatermarkPreviewResult,
@@ -78,30 +86,22 @@ const getPathForLocalFile = (file: File): GetPathForLocalFileResult => {
       p = webUtils.getPathForFile(file)
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
-      if (isPreloadDebug)
-        console.warn('[preload getPathForLocalFile] webUtils threw', file.name, msg)
+      if (isPreloadDebug) console.warn('[preload getPathForLocalFile] webUtils threw')
       return { ok: false, code: 'webutils_threw', message: msg }
     }
     if (typeof p !== 'string' || !p.trim()) {
       const msg =
         'webUtils.getPathForFile returned empty (File is often not backed by a real path - e.g. from FileSystemHandle.getFile()).'
       if (isPreloadDebug) {
-        console.warn('[preload getPathForLocalFile]', msg, {
-          name: file.name,
-          size: file.size,
-          type: file.type
-        })
+        console.warn('[preload getPathForLocalFile] empty local path')
       }
       return { ok: false, code: 'webutils_empty', message: msg }
     }
     const path = p.trim()
-    if (isPreloadDebug) {
-      console.debug('[preload getPathForLocalFile] ok', { name: file.name, path })
-    }
     return { ok: true, path }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
-    if (isPreloadDebug) console.warn('[preload getPathForLocalFile] unknown', msg)
+    if (isPreloadDebug) console.warn('[preload getPathForLocalFile] unknown failure')
     return { ok: false, code: 'unknown', message: msg }
   }
 }
@@ -220,6 +220,30 @@ const desktopApi = {
     return () => {
       ipcRenderer.removeListener(IpcChannels.IMAGE_FORMAT_CONVERT_EVENT, listener)
     }
+  },
+  pickDocumentMergeImages: (): Promise<string[]> =>
+    ipcRenderer.invoke(IpcChannels.DIALOG_SELECT_DOCUMENT_IMAGES),
+  pickDocumentMergePdf: (): Promise<string | null> =>
+    ipcRenderer.invoke(IpcChannels.DIALOG_SELECT_DOCUMENT_PDF),
+  pickDocumentMergeSavePath: (payload: {
+    defaultPath: string
+    format: DocumentOutputFormat
+  }): Promise<string | null> =>
+    ipcRenderer.invoke(IpcChannels.DIALOG_SELECT_DOCUMENT_SAVE, payload),
+  inspectDocumentMergeImages: (paths: string[]): Promise<InspectDocumentImagesResult> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_DOCUMENT_INSPECT_IMAGES, paths),
+  createDocumentMergeThumbnail: (path: string): Promise<DocumentImageThumbnail> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_DOCUMENT_THUMBNAIL, path),
+  probeDocumentMergePdf: (path: string): Promise<DocumentPdfDescriptor> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_DOCUMENT_PROBE_PDF, path),
+  startDocumentMerge: (req: StartDocumentMergeRequest): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_DOCUMENT_MERGE_START, req),
+  cancelDocumentMerge: (jobId: string): Promise<{ ok: true }> =>
+    ipcRenderer.invoke(IpcChannels.IMAGE_DOCUMENT_MERGE_CANCEL, jobId),
+  onDocumentMergeEvent: (cb: (event: DocumentMergeEvent) => void): (() => void) => {
+    const listener = (_event: unknown, data: DocumentMergeEvent): void => cb(data)
+    ipcRenderer.on(IpcChannels.IMAGE_DOCUMENT_MERGE_EVENT, listener)
+    return () => ipcRenderer.removeListener(IpcChannels.IMAGE_DOCUMENT_MERGE_EVENT, listener)
   },
   probeVideoFormatConvert: (inputPath: string): Promise<VideoFormatConvertProbeResult> =>
     ipcRenderer.invoke(IpcChannels.VIDEO_FORMAT_CONVERT_PROBE, inputPath),

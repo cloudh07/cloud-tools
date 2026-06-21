@@ -1,4 +1,4 @@
-import archiver from 'archiver'
+import { ZipArchive } from 'archiver'
 import { createWriteStream } from 'fs'
 import { mkdir } from 'fs/promises'
 import { basename, dirname } from 'path'
@@ -12,7 +12,7 @@ export async function createZipFromFiles(params: {
 
   await new Promise<void>((resolve, reject) => {
     const output = createWriteStream(params.zipPath)
-    const archive = archiver('zip', { zlib: { level: 9 } })
+    const archive = new ZipArchive({ zlib: { level: 9 } })
 
     output.on('close', () => resolve())
     output.on('error', reject)

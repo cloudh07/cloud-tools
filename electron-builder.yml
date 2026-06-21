@@ -6,6 +6,8 @@ extraResources:
   - from: resources/ffmpeg-bin
     to: ffmpeg-bin
 files:
+  - out/**/*
+  - package.json
   - '!**/.vscode/*'
   - '!src/*'
   - '!electron.vite.config.{js,ts,mjs,cjs}'

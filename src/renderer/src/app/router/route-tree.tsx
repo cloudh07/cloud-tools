@@ -9,6 +9,7 @@ import { parseImageSmartCropSearch } from '@/features/image-smart-crop/applicati
 import type { ImageFormatConvertRouteContextSlice } from '@/features/image-format-convert/domain/image-format-convert-route-context'
 import { parseImageFormatConvertSearch } from '@/features/image-format-convert/application/image-format-convert-search.schema'
 import { ImageFormatConvertPage } from '@/features/image-format-convert/presentation/pages/ImageFormatConvertPage'
+import { ImageDocumentMergePage } from '@/features/image-document-merge/presentation/pages/ImageDocumentMergePage'
 import type { ImageWatermarkRouteContextSlice } from '@/features/image-watermark/domain/image-watermark-route-context'
 import { ImageWatermarkPage } from '@/features/image-watermark/presentation/pages/ImageWatermarkPage'
 import type { WatermarkRemoveRouteContextSlice } from '@/features/watermark-remove/domain/watermark-remove-route-context'
@@ -120,6 +121,13 @@ const imageFormatConvertRoute = createRoute({
   component: ImageFormatConvertPage
 })
 
+const imageDocumentMergeRoute = createRoute({
+  getParentRoute: () => toolsRoute,
+  path: 'image-document-merge',
+  staticData: { breadcrumb: 'Ghép PDF/DOCX' } satisfies RouteBreadcrumbStatic,
+  component: ImageDocumentMergePage
+})
+
 const imageWatermarkRoute = createRoute({
   getParentRoute: () => toolsRoute,
   path: 'image-watermark',
@@ -175,6 +183,7 @@ export const routeTree = rootRoute.addChildren([
     audioExtractRoute,
     imageSmartCropRoute,
     imageFormatConvertRoute,
+    imageDocumentMergeRoute,
     imageWatermarkRoute,
     watermarkRemoveRoute,
     imageSmartCropBatchRedirectRoute
