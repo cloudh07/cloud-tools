@@ -17,6 +17,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/shared/presentation/components/ui/card'
+import { Checkbox } from '@/shared/presentation/components/ui/checkbox'
 import { Progress } from '@/shared/presentation/components/ui/progress'
 import { Spinner } from '@/shared/presentation/components/ui/spinner'
 import { Tabs, TabsList, TabsTrigger } from '@/shared/presentation/components/ui/tabs'
@@ -31,7 +32,12 @@ const PHASE_LABELS: Record<DocumentMergeProgressPhase, string> = {
   inspect: 'Đang kiểm tra file',
   normalize: 'Đang chuẩn hóa ảnh',
   merge: 'Đang ghép tài liệu',
+  optimize: 'Đang tối ưu PDF dưới 10 MB',
   write: 'Đang ghi file'
+}
+
+function formatOutputSize(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
 }
 
 function acceptAnyLocalPaths(paths: readonly string[]): { ok: true; paths: string[] } {
@@ -182,6 +188,7 @@ export function ImageDocumentMergePage(): ReactElement {
       basePdfPath: current.mode === 'append' ? (current.basePdf?.path ?? null) : null,
       outputPath,
       imagePaths: current.queue.map((item) => item.path),
+      blankPageHandling: current.mode === 'append' ? current.blankPageHandling : 'preserve',
       settings: {
         ...current.settings,
         pageSize: current.outputFormat === 'docx' ? 'a4' : current.settings.pageSize
@@ -236,7 +243,7 @@ export function ImageDocumentMergePage(): ReactElement {
                   </Tabs>
                 </CardHeader>
                 {store.mode === 'append' ? (
-                  <CardContent>
+                  <CardContent className="space-y-4">
                     <div
                       {...pdfDrop.getRootProps({
                         className: cn(
@@ -256,7 +263,8 @@ export function ImageDocumentMergePage(): ReactElement {
                           <p className="text-sm font-medium">PDF gốc</p>
                           {store.basePdf ? (
                             <p className="truncate text-xs text-muted-foreground">
-                              {store.basePdf.name} · {store.basePdf.pageCount} trang
+                              {store.basePdf.name} · {store.basePdf.pageCount} trang ·{' '}
+                              {store.basePdf.structurallyBlankPageCount} trang trắng cấu trúc
                             </p>
                           ) : (
                             <p className="text-xs text-muted-foreground">
@@ -269,6 +277,31 @@ export function ImageDocumentMergePage(): ReactElement {
                           Chọn PDF
                         </Button>
                       </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 border-t border-border/80 pt-4">
+                      <Checkbox
+                        id="idm-fill-blank-pages"
+                        checked={store.blankPageHandling === 'fill_and_remove'}
+                        disabled={busy || !store.basePdf}
+                        onCheckedChange={(checked) =>
+                          store.setBlankPageHandling(
+                            checked === true ? 'fill_and_remove' : 'preserve'
+                          )
+                        }
+                      />
+                      <label
+                        htmlFor="idm-fill-blank-pages"
+                        className="min-w-0 cursor-pointer space-y-1 text-sm"
+                      >
+                        <span className="block font-medium">
+                          Tự động điền và loại bỏ trang trắng
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          Ảnh thay thế trang rỗng đúng vị trí; trang rỗng dư bị xóa, ảnh dư được
+                          thêm vào cuối.
+                        </span>
+                      </label>
                     </div>
                   </CardContent>
                 ) : null}
@@ -344,6 +377,12 @@ export function ImageDocumentMergePage(): ReactElement {
                     <ShieldCheck className="size-4 text-emerald-600" aria-hidden />
                     Không upload, không public URL, không lưu lịch sử file.
                   </div>
+                  {(store.mode === 'append' || store.outputFormat === 'pdf') && (
+                    <p className="text-xs text-muted-foreground">
+                      PDF được tự động tối ưu dưới 10 MB; tác vụ sẽ dừng an toàn nếu không thể đạt
+                      giới hạn.
+                    </p>
+                  )}
                   <Button
                     type="button"
                     variant="secondary"
@@ -395,7 +434,18 @@ export function ImageDocumentMergePage(): ReactElement {
                   ) : null}
                   {store.job.status === 'completed' && store.job.resultPath ? (
                     <div className="space-y-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
-                      <p>Hoàn tất · {store.job.pageCount} trang</p>
+                      <p>
+                        Hoàn tất · {store.job.pageCount} trang
+                        {store.job.outputSizeBytes != null
+                          ? ` · ${formatOutputSize(store.job.outputSizeBytes)}`
+                          : ''}
+                      </p>
+                      {store.job.blankPagesFilled > 0 || store.job.blankPagesRemoved > 0 ? (
+                        <p className="text-xs text-muted-foreground">
+                          Đã điền {store.job.blankPagesFilled} và loại bỏ{' '}
+                          {store.job.blankPagesRemoved} trang trắng.
+                        </p>
+                      ) : null}
                       <div className="flex gap-2">
                         <Button
                           size="sm"

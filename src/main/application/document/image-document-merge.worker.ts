@@ -1,4 +1,4 @@
-import { rm } from 'fs/promises'
+import { rm, stat } from 'fs/promises'
 import { parentPort, workerData } from 'node:worker_threads'
 
 import type {
@@ -48,22 +48,33 @@ async function run(): Promise<void> {
       })
     }
 
-    const pageCount =
-      request.outputFormat === 'pdf'
-        ? await writePdfDocument({
-            basePdfPath: request.basePdfPath,
-            outputPath: request.temporaryOutputPath,
-            images: inspection.accepted,
-            settings: request.settings,
-            onProgress
-          })
-        : await writeDocxDocument({
-            outputPath: request.temporaryOutputPath,
-            images: inspection.accepted,
-            settings: request.settings,
-            onProgress
-          })
-    emit({ type: 'completed', pageCount })
+    if (request.outputFormat === 'pdf') {
+      const result = await writePdfDocument({
+        basePdfPath: request.basePdfPath,
+        outputPath: request.temporaryOutputPath,
+        images: inspection.accepted,
+        settings: request.settings,
+        blankPageHandling: request.blankPageHandling,
+        onProgress
+      })
+      emit({ type: 'completed', ...result })
+      return
+    }
+
+    const pageCount = await writeDocxDocument({
+      outputPath: request.temporaryOutputPath,
+      images: inspection.accepted,
+      settings: request.settings,
+      onProgress
+    })
+    const outputSizeBytes = (await stat(request.temporaryOutputPath)).size
+    emit({
+      type: 'completed',
+      pageCount,
+      outputSizeBytes,
+      blankPagesFilled: 0,
+      blankPagesRemoved: 0
+    })
   } catch (error) {
     await rm(request.temporaryOutputPath, { force: true }).catch(() => undefined)
     emit({ type: 'failed', message: error instanceof Error ? error.message : String(error) })

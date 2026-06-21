@@ -1,5 +1,5 @@
 import type { BrowserWindow } from 'electron'
-import { rename, rm } from 'fs/promises'
+import { rename, rm, stat } from 'fs/promises'
 import type { Worker } from 'node:worker_threads'
 
 import createDocumentMergeWorker from './image-document-merge.worker?nodeWorker'
@@ -11,7 +11,9 @@ import {
   validateDocumentOutputPath
 } from '@main/infrastructure/document/document-output-path'
 import { IpcChannels } from '@shared/constants/ipc-channels'
+import { DOCUMENT_MERGE_LIMITS } from '@shared/domain/image-document-merge'
 import type {
+  DocumentOutputFormat,
   DocumentMergeEvent,
   DocumentMergeWorkerMessage,
   DocumentMergeWorkerRequest,
@@ -23,6 +25,7 @@ type ActiveJob = {
   outputPath: string
   temporaryOutputPath: string
   worker: Worker
+  outputFormat: DocumentOutputFormat
   settled: boolean
 }
 
@@ -77,6 +80,7 @@ export class ImageDocumentMergeManager {
       outputPath,
       temporaryOutputPath,
       worker,
+      outputFormat: request.outputFormat,
       settled: false
     }
     this.activeJob = active
@@ -120,13 +124,23 @@ export class ImageDocumentMergeManager {
 
     active.settled = true
     try {
+      const outputSizeBytes = (await stat(active.temporaryOutputPath)).size
+      if (
+        active.outputFormat === 'pdf' &&
+        outputSizeBytes >= DOCUMENT_MERGE_LIMITS.maxOutputPdfBytes
+      ) {
+        throw new Error('The generated PDF exceeds the strict 10 MB output limit.')
+      }
       await rm(active.outputPath, { force: true })
       await rename(active.temporaryOutputPath, active.outputPath)
       this.emit({
         type: 'completed',
         jobId: active.jobId,
         outputPath: active.outputPath,
-        pageCount: message.pageCount
+        pageCount: message.pageCount,
+        outputSizeBytes,
+        blankPagesFilled: message.blankPagesFilled,
+        blankPagesRemoved: message.blankPagesRemoved
       })
     } catch (error) {
       await rm(active.temporaryOutputPath, { force: true })

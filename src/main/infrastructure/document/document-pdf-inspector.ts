@@ -7,6 +7,7 @@ import {
   DOCUMENT_MERGE_LIMITS,
   type DocumentPdfDescriptor
 } from '@shared/domain/image-document-merge'
+import { findStructurallyBlankPdfPageIndices } from './pdf-blank-page-analyzer'
 
 async function hasPdfSignature(filePath: string): Promise<boolean> {
   const handle = await open(filePath, 'r')
@@ -41,7 +42,13 @@ export async function inspectDocumentPdf(filePath: string): Promise<DocumentPdfD
     if (pageCount > DOCUMENT_MERGE_LIMITS.maxPdfPages) {
       throw new Error(`${name} exceeds the 500-page source PDF limit.`)
     }
-    return { path: normalized, name, sizeBytes: fileStat.size, pageCount }
+    return {
+      path: normalized,
+      name,
+      sizeBytes: fileStat.size,
+      pageCount,
+      structurallyBlankPageCount: findStructurallyBlankPdfPageIndices(pdf).length
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     if (/encrypted/i.test(message)) {

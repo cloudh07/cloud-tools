@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 
 import type {
+  BlankPageHandling,
   DocumentImageDescriptor,
   DocumentImageRejection,
   DocumentMargin,
@@ -30,12 +31,16 @@ type JobState = {
   error: string | null
   resultPath: string | null
   pageCount: number | null
+  outputSizeBytes: number | null
+  blankPagesFilled: number
+  blankPagesRemoved: number
 }
 
 type State = {
   mode: DocumentMergeMode
   outputFormat: DocumentOutputFormat
   basePdf: DocumentPdfDescriptor | null
+  blankPageHandling: BlankPageHandling
   outputPath: string | null
   settings: PageSettings
   queue: DocumentMergeQueueItem[]
@@ -44,6 +49,7 @@ type State = {
   setMode: (mode: DocumentMergeMode) => void
   setOutputFormat: (format: DocumentOutputFormat) => void
   setBasePdf: (pdf: DocumentPdfDescriptor | null) => void
+  setBlankPageHandling: (handling: BlankPageHandling) => void
   setOutputPath: (path: string | null) => void
   updateSettings: (partial: Partial<PageSettings>) => void
   addImages: (images: DocumentImageDescriptor[]) => string[]
@@ -66,7 +72,10 @@ function initialJob(): JobState {
     currentIndex: -1,
     error: null,
     resultPath: null,
-    pageCount: null
+    pageCount: null,
+    outputSizeBytes: null,
+    blankPagesFilled: 0,
+    blankPagesRemoved: 0
   }
 }
 
@@ -74,6 +83,7 @@ export const useImageDocumentMergeStore = create<State>((set, get) => ({
   mode: 'create',
   outputFormat: 'pdf',
   basePdf: null,
+  blankPageHandling: 'preserve',
   outputPath: null,
   settings: {
     pageSize: 'a4',
@@ -90,6 +100,7 @@ export const useImageDocumentMergeStore = create<State>((set, get) => ({
       mode,
       outputFormat: mode === 'append' ? 'pdf' : state.outputFormat,
       basePdf: mode === 'append' ? state.basePdf : null,
+      blankPageHandling: 'preserve',
       outputPath: null,
       settings: {
         ...state.settings,
@@ -106,7 +117,10 @@ export const useImageDocumentMergeStore = create<State>((set, get) => ({
         pageSize: outputFormat === 'docx' ? 'a4' : state.settings.pageSize
       }
     })),
-  setBasePdf: (basePdf) => set({ basePdf, outputPath: null }),
+  setBasePdf: (basePdf) =>
+    set({ basePdf, blankPageHandling: 'preserve', outputPath: null, job: initialJob() }),
+  setBlankPageHandling: (blankPageHandling) =>
+    set({ blankPageHandling, outputPath: null, job: initialJob() }),
   setOutputPath: (outputPath) => set({ outputPath }),
   updateSettings: (partial) => set((state) => ({ settings: { ...state.settings, ...partial } })),
   addImages: (images) => {
@@ -178,7 +192,10 @@ export const useImageDocumentMergeStore = create<State>((set, get) => ({
               status: 'completed',
               progress: 1,
               resultPath: event.outputPath,
-              pageCount: event.pageCount
+              pageCount: event.pageCount,
+              outputSizeBytes: event.outputSizeBytes,
+              blankPagesFilled: event.blankPagesFilled,
+              blankPagesRemoved: event.blankPagesRemoved
             }
           }
         case 'failed':

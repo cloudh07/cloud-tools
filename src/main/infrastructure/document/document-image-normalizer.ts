@@ -20,6 +20,12 @@ export type NormalizedDocumentImage = {
   layout: DocumentPageLayout
 }
 
+export type DocumentImageNormalizationOptions = {
+  maxEdgePixels?: number
+  quality?: number
+  preserveAlpha?: boolean
+}
+
 function orientedDimensions(
   descriptor: DocumentImageDescriptor,
   orientation: number | undefined
@@ -30,13 +36,16 @@ function orientedDimensions(
     : { width: descriptor.width, height: descriptor.height }
 }
 
-function targetPixelSize(layout: DocumentPageLayout): { width: number; height: number } {
+function targetPixelSize(
+  layout: DocumentPageLayout,
+  maxEdgePixels: number
+): { width: number; height: number } {
   const pixelsPerPoint = 300 / 72
   let width = layout.contentWidthPoints * pixelsPerPoint
   let height = layout.contentHeightPoints * pixelsPerPoint
   const maximumEdge = Math.max(width, height)
-  if (maximumEdge > DOCUMENT_MERGE_LIMITS.maxNormalizedEdgePixels) {
-    const scale = DOCUMENT_MERGE_LIMITS.maxNormalizedEdgePixels / maximumEdge
+  if (maximumEdge > maxEdgePixels) {
+    const scale = maxEdgePixels / maximumEdge
     width *= scale
     height *= scale
   }
@@ -45,7 +54,8 @@ function targetPixelSize(layout: DocumentPageLayout): { width: number; height: n
 
 export async function normalizeDocumentImage(
   descriptor: DocumentImageDescriptor,
-  settings: PageSettings
+  settings: PageSettings,
+  options: DocumentImageNormalizationOptions = {}
 ): Promise<NormalizedDocumentImage> {
   const metadata = await sharp(descriptor.path, {
     failOn: 'error',
@@ -53,7 +63,12 @@ export async function normalizeDocumentImage(
   }).metadata()
   const source = orientedDimensions(descriptor, metadata.orientation)
   const layout = calculateDocumentPageLayout(source.width, source.height, settings)
-  const target = targetPixelSize(layout)
+  const target = targetPixelSize(
+    layout,
+    options.maxEdgePixels ?? DOCUMENT_MERGE_LIMITS.maxNormalizedEdgePixels
+  )
+  const preserveAlpha = options.preserveAlpha ?? true
+  const quality = options.quality ?? settings.quality
 
   let pipeline = sharp(descriptor.path, {
     failOn: 'error',
@@ -71,7 +86,7 @@ export async function normalizeDocumentImage(
     })
   }
 
-  if (descriptor.hasAlpha) {
+  if (descriptor.hasAlpha && preserveAlpha) {
     const result = await pipeline.png({ compressionLevel: 8 }).toBuffer({ resolveWithObject: true })
     return {
       data: result.data,
@@ -86,7 +101,7 @@ export async function normalizeDocumentImage(
 
   const result = await pipeline
     .flatten({ background: '#ffffff' })
-    .jpeg({ quality: settings.quality, mozjpeg: true })
+    .jpeg({ quality, mozjpeg: true })
     .toBuffer({ resolveWithObject: true })
   return {
     data: result.data,

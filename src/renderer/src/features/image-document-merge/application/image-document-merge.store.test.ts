@@ -18,6 +18,7 @@ function descriptor(path: string, sizeBytes = 1024): DocumentImageDescriptor {
 
 describe('image document merge queue', () => {
   beforeEach(() => {
+    useImageDocumentMergeStore.getState().setMode('create')
     useImageDocumentMergeStore.getState().clearImages()
   })
 
@@ -32,5 +33,15 @@ describe('image document merge queue', () => {
       'second.png',
       'first.png'
     ])
+  })
+
+  it('keeps blank-page handling opt-in and resets it with the mode', () => {
+    const state = useImageDocumentMergeStore.getState()
+    state.setMode('append')
+    state.setBlankPageHandling('fill_and_remove')
+    expect(useImageDocumentMergeStore.getState().blankPageHandling).toBe('fill_and_remove')
+
+    state.setMode('create')
+    expect(useImageDocumentMergeStore.getState().blankPageHandling).toBe('preserve')
   })
 })

@@ -15,6 +15,7 @@ export const DOCUMENT_MERGE_LIMITS = {
   maxInputPixels: 80_000_000,
   maxPdfBytes: 100 * 1024 * 1024,
   maxPdfPages: 500,
+  maxOutputPdfBytes: 10 * 1024 * 1024,
   thumbnailEdgePixels: 192,
   maxNormalizedEdgePixels: 3508
 } as const
@@ -25,6 +26,7 @@ export type DocumentPageSize = 'a4' | 'match_image'
 export type DocumentOrientation = 'auto' | 'portrait' | 'landscape'
 export type DocumentMargin = 'none' | 'small' | 'standard'
 export type ImageFit = 'contain' | 'cover' | 'actual'
+export type BlankPageHandling = 'preserve' | 'fill_and_remove'
 
 export type PageSettings = {
   pageSize: DocumentPageSize
@@ -76,6 +78,7 @@ export type DocumentPdfDescriptor = {
   name: string
   sizeBytes: number
   pageCount: number
+  structurallyBlankPageCount: number
 }
 
 export type DocumentImageThumbnail = {
@@ -90,10 +93,17 @@ export type StartDocumentMergeRequest = {
   basePdfPath: string | null
   outputPath: string
   imagePaths: string[]
+  blankPageHandling: BlankPageHandling
   settings: PageSettings
 }
 
-export type DocumentMergeProgressPhase = 'validate' | 'inspect' | 'normalize' | 'merge' | 'write'
+export type DocumentMergeProgressPhase =
+  | 'validate'
+  | 'inspect'
+  | 'normalize'
+  | 'merge'
+  | 'optimize'
+  | 'write'
 
 export type DocumentMergeEvent =
   | { type: 'started'; jobId: string; totalImages: number }
@@ -105,7 +115,15 @@ export type DocumentMergeEvent =
       currentIndex: number
       totalImages: number
     }
-  | { type: 'completed'; jobId: string; outputPath: string; pageCount: number }
+  | {
+      type: 'completed'
+      jobId: string
+      outputPath: string
+      pageCount: number
+      outputSizeBytes: number
+      blankPagesFilled: number
+      blankPagesRemoved: number
+    }
   | { type: 'cancelled'; jobId: string }
   | { type: 'failed'; jobId: string; message: string }
 
@@ -121,5 +139,11 @@ export type DocumentMergeWorkerMessage =
       currentIndex: number
       totalImages: number
     }
-  | { type: 'completed'; pageCount: number }
+  | {
+      type: 'completed'
+      pageCount: number
+      outputSizeBytes: number
+      blankPagesFilled: number
+      blankPagesRemoved: number
+    }
   | { type: 'failed'; message: string }

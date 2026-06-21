@@ -25,7 +25,10 @@ describe('document PDF and output validation', () => {
     pdf.addPage()
     const path = join(directory, 'valid.pdf')
     await writeFile(path, await pdf.save())
-    await expect(inspectDocumentPdf(path)).resolves.toMatchObject({ pageCount: 2 })
+    await expect(inspectDocumentPdf(path)).resolves.toMatchObject({
+      pageCount: 2,
+      structurallyBlankPageCount: 2
+    })
   })
 
   it('rejects a corrupt PDF and an output path that overwrites the source', async () => {

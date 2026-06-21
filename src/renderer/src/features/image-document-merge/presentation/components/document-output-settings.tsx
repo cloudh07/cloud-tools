@@ -145,7 +145,8 @@ export function DocumentOutputSettings({ busy }: { busy: boolean }): ReactElemen
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            Không bảo đảm chính xác dung lượng file. Ảnh có alpha được giữ bằng PNG.
+            Đây là chất lượng ưu tiên. Với PDF, hệ thống có thể giảm thêm chất lượng và độ phân giải
+            để giữ file dưới 10 MB.
           </p>
         </div>
       </CardContent>

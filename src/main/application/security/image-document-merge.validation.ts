@@ -19,6 +19,7 @@ const startRequestSchema = z
     basePdfPath: z.union([z.string().min(1).max(8192), z.null()]),
     outputPath: z.string().min(1).max(8192),
     imagePaths: z.array(z.string().min(1).max(8192)).min(1).max(DOCUMENT_MERGE_LIMITS.maxImages),
+    blankPageHandling: z.enum(['preserve', 'fill_and_remove']),
     settings: pageSettingsSchema
   })
   .superRefine((value, context) => {
@@ -30,6 +31,12 @@ const startRequestSchema = z
     }
     if (value.mode === 'create' && value.basePdfPath !== null) {
       context.addIssue({ code: 'custom', message: 'Create mode cannot include a source PDF.' })
+    }
+    if (value.mode === 'create' && value.blankPageHandling !== 'preserve') {
+      context.addIssue({
+        code: 'custom',
+        message: 'Blank-page handling is available for append mode only.'
+      })
     }
     if (value.outputFormat === 'docx' && value.settings.pageSize === 'match_image') {
       context.addIssue({
